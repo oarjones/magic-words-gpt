@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MagicWords.Features.Board;
+using System;
 using UnityEngine;
 
 namespace MagicWords.Core.Utilities
@@ -10,6 +11,7 @@ namespace MagicWords.Core.Utilities
     {
         public static event Action OnGameStart;
         public static event Action OnGameOver;
+        public static event Action<CellModel> OnCellStateChanged;
 
         public static void RaiseGameStart()
         {
@@ -20,5 +22,12 @@ namespace MagicWords.Core.Utilities
         {
             OnGameOver?.Invoke();
         }
+        
+        public static void RaiseCellStateChanged(CellModel cell)
+        {
+            OnCellStateChanged?.Invoke(cell);
+        }
+
+
     }
 }

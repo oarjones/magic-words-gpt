@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using MagicWords.Core;
 using MagicWords.UI;
+using TMPro;
 
 namespace MagicWords.Features.Words
 {
