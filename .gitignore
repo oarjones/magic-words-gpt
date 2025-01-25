@@ -60,6 +60,8 @@ sysinfo.txt
 google-services.json
 GoogleService-Info.plist
 
+Assets/StreamingAssets/google-services-desktop.json
+
 # Builds
 *.apk
 *.aab
