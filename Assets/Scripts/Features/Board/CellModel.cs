@@ -15,6 +15,11 @@ namespace MagicWords.Features.Board
         public int Row { get; private set; }
         public int Col { get; private set; }
 
+
+        public int Level { get; private set; }
+        public int TileNumber { get; private set; }
+        public string Name { get; private set; }
+
         // El estado combinable (bloqueado, oculto, congelado, seleccionado, etc.)
         public CellState State { get; private set; } = CellState.None;
 
@@ -36,12 +41,21 @@ namespace MagicWords.Features.Board
         // Celdas adyacentes, si necesitas conectividad (hexagonal, etc.)
         public List<CellModel> AdjacentCells { get; private set; } = new List<CellModel>();
 
-        public CellModel(int row, int col)
+        public CellModel(int level, int tileNumber, string name, Vector3 position)
         {
-            Row = row;
-            Col = col;
+            Level= level;
+            TileNumber= tileNumber;
+            Name= name;
+            Position = position;
         }
 
+
+        public Vector3 Position { get; private set; }
+
+        public void SetPosition(float x, float y)
+        {
+            Position = new Vector3(x, y, 0);
+        }
         public override void Initialize()
         {
             base.Initialize();

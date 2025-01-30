@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;    // O TextMeshPro si prefieres
 using MagicWords.UI;
+using TMPro;
 
 namespace MagicWords.Features.Board
 {
@@ -13,7 +14,7 @@ namespace MagicWords.Features.Board
     {
         [Header("Visual References")]
         [SerializeField] private SpriteRenderer cellSpriteRenderer;
-        [SerializeField] private Text letterText; // O TextMeshProUGUI
+        [SerializeField] private TMP_Text letterText; // O TextMeshProUGUI
         [SerializeField] private GameObject blockedEffect;
         [SerializeField] private GameObject freezeEffect;
         [SerializeField] private GameObject selectedHalo;
