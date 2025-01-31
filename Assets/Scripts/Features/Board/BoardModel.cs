@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using MagicWords.Core;
 using TMPro;
 using UnityEngine;
@@ -216,44 +217,32 @@ namespace MagicWords.Features.Board
 
             }
 
+            if(AllCells.Count > 0)
+            {
+                AssignTileNeighbors();
+            }
+
         }
 
-        // Ejemplo de adyacencias, tal cual legacy
-        private void AssignNeighborsLegacy(CellModel cell)
+
+        /// <summary>
+        /// Método para asiganar las celdas vecinas de cada celda del tablero
+        /// </summary>
+        public void AssignTileNeighbors()
         {
-            int r = cell.Row;
-            int c = cell.Col;
-            // Array de offsets "flat-top" odd-r (legacy style)
-            int[][] offsetsEven = new int[][]
-            {
-                new int[]{ 0, -1}, new int[]{0, +1},
-                new int[]{-1, 0}, new int[]{+1, 0},
-                new int[]{-1, -1}, new int[]{+1, -1}
-            };
-            int[][] offsetsOdd = new int[][]
-            {
-                new int[]{ 0, -1}, new int[]{0, +1},
-                new int[]{-1, 0}, new int[]{+1, 0},
-                new int[]{-1, +1}, new int[]{+1, +1}
-            };
 
-            bool isOddRow = (r % 2 == 1);
-            var chosenOffsets = isOddRow ? offsetsOdd : offsetsEven;
-
-            foreach (var off in chosenOffsets)
+            foreach (var tile in AllCells)
             {
-                int nr = r + off[0];
-                int nc = c + off[1];
+                tile.AdjacentCells.neighbor_TOP = AllCells.Where(c => c.X == tile.X && c.Y == (tile.Y + 1f)).Any() ? AllCells.Where(c => c.X == tile.X && c.Y == (tile.Y + 1f)).First() : null;
+                tile.AdjacentCells.neighbor_BOTTOM = AllCells.Where(c => c.X == tile.X && c.Y == (tile.Y - 1f)).Any() ? AllCells.Where(c => c.X == tile.X && c.Y == (tile.Y - 1f)).First() : null;
 
-                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols)
-                {
-                    var neighbor = AllCells.Find(x => x.Row == nr && x.Col == nc);
-                    if (neighbor != null)
-                    {
-                        cell.AddAdjacentCell(neighbor);
-                    }
-                }
+                tile.AdjacentCells.neighbor_LEFTUP = AllCells.Where(c => c.X == (tile.X - 1f) && c.Y == (tile.Y + 0.5f)).Any() ? AllCells.Where(c => c.X == (tile.X - 1f) && c.Y == (tile.Y + 0.5f)).First() : null;
+                tile.AdjacentCells.neighbor_LEFTDOWN = AllCells.Where(c => c.X == (tile.X - 1f) && c.Y == (tile.Y - 0.5f)).Any() ? AllCells.Where(c => c.X == (tile.X - 1f) && c.Y == (tile.Y - 0.5f)).First() : null;
+
+                tile.AdjacentCells.neighbor_RIGHTUP = AllCells.Where(c => c.X == (tile.X + 1f) && c.Y == (tile.Y + 0.5f)).Any() ? AllCells.Where(c => c.X == (tile.X + 1f) && c.Y == (tile.Y + 0.5f)).First() : null;
+                tile.AdjacentCells.neighbor_RIGHTDOWN = AllCells.Where(c => c.X == (tile.X + 1f) && c.Y == (tile.Y - 0.5f)).Any() ? AllCells.Where(c => c.X == (tile.X + 1f) && c.Y == (tile.Y - 0.5f)).First() : null;
             }
+
         }
     }
 }

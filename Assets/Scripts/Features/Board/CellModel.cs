@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MagicWords.Core;
 using MagicWords.Core.Utilities; // Si quieres disparar eventos desde aquí
@@ -38,8 +39,12 @@ namespace MagicWords.Features.Board
         public bool UseTimeCounter { get; private set; }
         public float TimeCounter { get; private set; }
 
-        // Celdas adyacentes, si necesitas conectividad (hexagonal, etc.)
-        public List<CellModel> AdjacentCells { get; private set; } = new List<CellModel>();
+
+        /// <summary>
+        /// Celdas adyacentes
+        /// </summary>
+        [HideInInspector]
+        public AdjacentCell AdjacentCells;
 
         public CellModel(int level, int tileNumber, string name, Vector3 position)
         {
@@ -47,9 +52,12 @@ namespace MagicWords.Features.Board
             TileNumber= tileNumber;
             Name= name;
             Position = position;
+            X = position.x;
+            Y = position.y;
         }
 
-
+        public float X { get; private set; }
+        public float Y { get; private set; }
         public Vector3 Position { get; private set; }
 
         public void SetPosition(float x, float y)
@@ -64,6 +72,11 @@ namespace MagicWords.Features.Board
             CurrentLetter = string.Empty;
             UseTimeCounter = false;
             TimeCounter = 0f;
+            ClearAdjacentCells();
+        }
+
+        private void ClearAdjacentCells()
+        {
             AdjacentCells.Clear();
         }
 
@@ -226,16 +239,6 @@ namespace MagicWords.Features.Board
 
         #endregion
 
-        #region Adjacency
-
-        public void AddAdjacentCell(CellModel neighbor)
-        {
-            if (neighbor != null && !AdjacentCells.Contains(neighbor))
-            {
-                AdjacentCells.Add(neighbor);
-            }
-        }
-
-        #endregion
+        
     }
 }
