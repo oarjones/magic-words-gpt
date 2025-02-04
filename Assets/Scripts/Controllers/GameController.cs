@@ -1,38 +1,48 @@
-// GameController.cs
+using System;
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    [SerializeField] private GameConfig gameConfig;
-    [SerializeField] private BoardConfig boardConfig;
-    [SerializeField] private GameView gameView;
-
+    private GameConfig gameConfig;
+    private BoardConfig boardConfig;
+    private GameView gameView;
     private IGameMode gameMode;
     private GameModel gameModel;
     private IBackendService backendService;
     private IDictionaryService dictionaryService;
     private InputManager inputManager;
     private MatchmakingController matchmakingController;
+    private BoardGenerator boardGenerator;
+    private BoardController boardController;
+    
 
-    public void Initialize(IBackendService backendService, IDictionaryService dictionaryService, IGameMode gameMode, InputManager inputManager, MatchmakingController matchmakingController)
+    public void Initialize(IBackendService backendService, IDictionaryService dictionaryService, BoardGenerator boardGenerator, 
+        InputManager inputManager, MatchmakingController matchmakingController, GameConfig gameConfig, BoardConfig boardConfig, 
+        GameModel gameModel, BoardController boardController, GameObject gameView)
     {
         this.backendService = backendService;
         this.dictionaryService = dictionaryService;
-        this.gameMode = gameMode;
+        this.boardGenerator = boardGenerator;
         this.inputManager = inputManager;
         this.matchmakingController = matchmakingController;
+        this.gameConfig = gameConfig;
+        this.boardConfig = boardConfig;
+        this.gameModel = gameModel;
+        this.boardController = boardController;
+        this.gameView = gameView.GetComponent<GameView>();
 
-        // Example of initializing a new game
+        // Initialize the board through BoardController
+        boardController.Initialize(inputManager, boardGenerator, gameModel);
+        boardController.InitializeBoard();
+        this.gameView.InitializeBoard(gameModel.board); // Now GameModel is available for the View
+        this.gameView.UpdateTimer(gameModel.remainingTime);
+
         StartCoroutine(InitializeGame());
     }
     private IEnumerator InitializeGame()
     {
-        gameModel = gameMode.CreateGame(gameConfig, boardConfig, backendService, dictionaryService);
-        gameView.InitializeBoard(gameModel.board); // Inicializa el tablero a través de la vista
-        gameView.UpdateTimer(gameModel.remainingTime);
-
         // Set the game state to Playing after initialization
         gameModel.gameState = GameState.Playing;
 
@@ -43,6 +53,39 @@ public class GameController : MonoBehaviour
         }
 
         yield return null;
+    }
+
+    private IGameMode CreateGameMode(GameMode gameMode, IBackendService backendService)
+    {
+        string playerId = string.Empty;
+
+        switch (gameMode)
+        {
+            case GameMode.PvP:
+                // Assuming you have a way to get the opponent ID, e.g., from matchmaking
+                playerId = GetPlayerId(); // Implement this to get the current player's ID
+                string opponentId = GetOpponentId(); // Implement this to get the opponent's ID
+                return new PvPGameMode(playerId, opponentId, backendService);
+            case GameMode.PvE:
+                playerId = GetPlayerId();
+                return new PvAlgorithmGameMode(playerId);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
+        }
+    }
+
+    private string GetPlayerId()
+    {
+        // Return a unique identifier for the player
+        // This could be a Firebase User ID, PlayerPrefs value, or any other unique identifier
+        return SystemInfo.deviceUniqueIdentifier; // Example using the device's unique identifier
+    }
+
+    private string GetOpponentId()
+    {
+        // If you have a matchmaking system, this is where you would retrieve the opponent's ID
+        // For this example, we'll return a placeholder
+        return "opponent-placeholder-id";
     }
 
     private void OnGameUpdated(GameModel updatedGameModel)
@@ -177,6 +220,4 @@ public class GameController : MonoBehaviour
         // This needs to be adapted to however you determine the current player
         return gameModel.player1; // Or gameModel.player2 based on input or other logic
     }
-
-    //... Resto del GameController
 }

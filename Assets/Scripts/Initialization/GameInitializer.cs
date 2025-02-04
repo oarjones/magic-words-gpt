@@ -1,4 +1,3 @@
-// GameInitializer.cs
 using System;
 using UnityEngine;
 
@@ -7,27 +6,42 @@ public class GameInitializer : MonoBehaviour
     [SerializeField] private GameConfig gameConfig;
     [SerializeField] private BoardConfig boardConfig;
     [SerializeField] private DictionaryConfig dictionaryConfig;
-    [SerializeField] private GameView gameView;
-    [SerializeField] private MainMenuView mainMenuView;
+    [SerializeField] private GameObject mainMenuView;
+    [SerializeField] private GameObject gameView;
     private FirebaseController firebaseController;
     private DictionaryController dictionaryController;
     private GameController gameController;
     private BoardController boardController;
     private MatchmakingController matchmakingController;
     private InputManager inputManager;
+    private BoardGenerator boardGenerator;
 
     private void Awake()
     {
         // Initialize input manager
         inputManager = gameObject.AddComponent<InputManager>();
 
+        // Initialize BoardGenerator
+        boardGenerator = gameObject.AddComponent<BoardGenerator>();
+        boardGenerator.boardConfig = boardConfig;
+
         mainMenuView.gameObject.SetActive(true);
         gameView.gameObject.SetActive(false);
-        mainMenuView.Initialize(() => OnGameModeSelected(GameMode.PvP), () => OnGameModeSelected(GameMode.PvE));
+    }
+
+    public void StartPvPGame()
+    {
+        OnGameModeSelected(GameMode.PvP);
+    }
+
+    public void StartPvEGame()
+    {
+        OnGameModeSelected(GameMode.PvE);
     }
 
     private void OnGameModeSelected(GameMode mode)
     {
+        GameModeManager.Instance.SetGameMode(mode); // Guarda el modo de juego seleccionado
         gameConfig.selectedGameMode = mode;
         mainMenuView.gameObject.SetActive(false);
         gameView.gameObject.SetActive(true);
@@ -51,11 +65,17 @@ public class GameInitializer : MonoBehaviour
         // Initialize Game
         gameController = gameObject.AddComponent<GameController>();
         boardController = gameObject.AddComponent<BoardController>();
-        IGameMode gameMode = CreateGameMode(gameConfig.selectedGameMode, firebaseController);
-        gameController.Initialize(firebaseController, dictionaryController, gameMode, inputManager, matchmakingController);
+
+        // Create GameMode and GameModel before initializing controllers
+        IGameMode gameMode = CreateGameMode(GameModeManager.Instance.SelectedGameMode, firebaseController);
+        GameModel gameModel = gameMode.CreateGame(gameConfig, boardConfig, firebaseController, dictionaryController);
+
+        // Initialize controllers after creating GameModel
+        gameController.Initialize(firebaseController, dictionaryController, boardGenerator, inputManager, matchmakingController, gameConfig, boardConfig, gameModel, boardController, gameView);
+        boardController.Initialize(inputManager, boardGenerator, gameModel);
 
         // If PvP, start matchmaking
-        if (gameConfig.selectedGameMode == GameMode.PvP)
+        if (GameModeManager.Instance.SelectedGameMode == GameMode.PvP)
         {
             matchmakingController.FindMatch();
         }

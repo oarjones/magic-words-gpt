@@ -26,7 +26,8 @@ public class GameView : MonoBehaviour
 
     public void UpdateTimer(float remainingTime)
     {
-        timerText.text = Mathf.RoundToInt(remainingTime).ToString();
+        //TODO: implement timer
+        //timerText.text = Mathf.RoundToInt(remainingTime).ToString();
     }
 
     public void ShowGameEndScreen(string winnerId)

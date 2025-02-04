@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 [System.Serializable]
 public class Cell
 {
@@ -6,6 +8,7 @@ public class Cell
     public string letter;
     public bool isOccupied; //Add this property to track if a cell is occupied by a player.
     public bool isObjective; // Add this property to mark a cell as an objective.
+    public List<Cell> neighbors;
 
     public Cell(int x, int y, string letter)
     {

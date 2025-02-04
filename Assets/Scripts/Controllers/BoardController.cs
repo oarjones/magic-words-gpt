@@ -4,14 +4,21 @@ public class BoardController : MonoBehaviour
 {
     private GameModel gameModel;
     private InputManager inputManager;
+    private BoardGenerator boardGenerator;
 
-    public void Initialize(GameModel gameModel, InputManager inputManager)
+    public void Initialize(InputManager inputManager, BoardGenerator boardGenerator, GameModel gameModel)
     {
-        this.gameModel = gameModel;
         this.inputManager = inputManager;
-
+        this.boardGenerator = boardGenerator;
+        this.gameModel = gameModel;
         // Subscribe to the OnCellClicked event from InputManager
         inputManager.OnCellClicked += HandleCellClicked;
+    }
+
+    public void InitializeBoard()
+    {
+        // Generate the board using the BoardGenerator
+        gameModel.board = boardGenerator.GenerateBoard();
     }
 
     private void HandleCellClicked(Cell cell)

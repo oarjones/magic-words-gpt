@@ -238,7 +238,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7064590375103957944}
   - component: {fileID: 8860611431135307807}
-  - component: {fileID: 2058739309500907167}
+  - component: {fileID: 353348759294167541}
   m_Layer: 5
   m_Name: HexCellPrefab
   m_TagString: Untagged
@@ -312,7 +312,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 100, y: 100}
   m_EdgeRadius: 0
---- !u!114 &2058739309500907167
+--- !u!114 &353348759294167541
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -321,12 +321,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 7887786759568585986}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bff919cdd76f25b48ad05716c6d41256, type: 3}
+  m_Script: {fileID: 11500000, guid: cc6dab285053edc4aaf9f09f3289412b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellSpriteRenderer: {fileID: 8047606793199325986}
   letterText: {fileID: 2249230441215493843}
-  blockedEffect: {fileID: 0}
-  freezeEffect: {fileID: 0}
-  selectedHalo: {fileID: 0}
-  hiddenVisual: {fileID: 0}
+  cellData:
+    x: 0
+    y: 0
+    letter: 
+    isOccupied: 0
+    isObjective: 0
+    neighbors: []

@@ -1,9 +1,10 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class CellView : MonoBehaviour
 {
-    public Text letterText;
+    public TextMeshProUGUI letterText;
 
     public Cell cellData;
 
