@@ -1,5 +1,6 @@
 // PvPGameMode.cs
 using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -79,27 +80,25 @@ public class PvPGameMode : IGameMode
 
     private Board CreateBoard(BoardConfig boardConfig)
     {
-        // Generate a new board based on boardConfig
-        Cell[,] cells = new Cell[boardConfig.boardWidth, boardConfig.boardHeight];
-        for (int x = 0; x < boardConfig.boardWidth; x++)
-        {
-            for (int y = 0; y < boardConfig.boardHeight; y++)
-            {
-                // Example letter, replace with your logic to assign letters
-                string letter = GetRandomLetter();
-                cells[x, y] = new Cell(x, y, letter);
-            }
-        }
-        return new Board(cells);
+        //// Generate a new board based on boardConfig
+        //Cell[,] cells = new Cell[boardConfig.boardWidth, boardConfig.boardHeight];
+        //for (int x = 0; x < boardConfig.boardWidth; x++)
+        //{
+        //    for (int y = 0; y < boardConfig.boardHeight; y++)
+        //    {
+        //        // Example letter, replace with your logic to assign letters
+        //        string letter = GetRandomLetter();
+        //        cells[x, y] = new Cell(x, y, letter);
+        //    }
+        //}
+        //return new Board(cells);
+
+        return new BoardGenerator().GenerateBoard(boardConfig.mapSize);
     }
 
-    private Cell GetInitialCellForPlayer(BoardConfig boardConfig, bool isPlayer1)
+    private CellView GetInitialCellForPlayer(BoardConfig boardConfig, bool isPlayer1)
     {
-        // Determine initial cell based on player number and board configuration
-        // This is a simple example, you might want to make it more sophisticated
-        int x = isPlayer1 ? 0 : boardConfig.boardWidth - 1;
-        int y = isPlayer1 ? 0 : boardConfig.boardHeight - 1;
-        return new Cell(x, y, GetRandomLetter());
+        return null;
     }
 
     private string GetRandomLetter()

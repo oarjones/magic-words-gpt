@@ -3,9 +3,9 @@ using System.Collections.Generic;
 [System.Serializable]
 public class Board
 {
-    public List<Cell> cells;
+    public List<CellView> cells;
 
-    public Board(List<Cell> cells)
+    public Board(List<CellView> cells)
     {
         this.cells = cells;
     }

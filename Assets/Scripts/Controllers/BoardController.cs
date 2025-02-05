@@ -5,6 +5,7 @@ public class BoardController : MonoBehaviour
     private GameModel gameModel;
     private InputManager inputManager;
     private BoardGenerator boardGenerator;
+    private BoardConfig boardConfig;
 
     public void Initialize(InputManager inputManager, BoardGenerator boardGenerator, GameModel gameModel)
     {
@@ -18,7 +19,7 @@ public class BoardController : MonoBehaviour
     public void InitializeBoard()
     {
         // Generate the board using the BoardGenerator
-        gameModel.board = boardGenerator.GenerateBoard();
+        gameModel.board = boardGenerator.GenerateBoard(boardConfig.mapSize);
     }
 
     private void HandleCellClicked(Cell cell)
@@ -28,13 +29,13 @@ public class BoardController : MonoBehaviour
         // and if they are allowed to select the cell based on game rules
 
         // For simplicity, let's assume any player can select any unoccupied cell
-        if (!cell.isOccupied)
-        {
-            // Notify the GameController about the selected cell
-            // This is where you would pass the selected cell to the GameController
-            // For example, using an event or a direct call
-            // GameController.Instance.HandleCellSelection(cell);
-        }
+        //if (!cell.isOccupied)
+        //{
+        //    // Notify the GameController about the selected cell
+        //    // This is where you would pass the selected cell to the GameController
+        //    // For example, using an event or a direct call
+        //    // GameController.Instance.HandleCellSelection(cell);
+        //}
     }
     // ...
     private void OnDestroy()

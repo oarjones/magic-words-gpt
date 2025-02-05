@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Assets.Scripts.Models;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,11 +9,7 @@ public class BoardGenerator : MonoBehaviour
     public BoardConfig boardConfig; // Asigna el ScriptableObject BoardConfig en el Inspector
 
 
-    private float _cellScaleFactorY;
-    public float xOffset = 0.400f;
-    public float yOffset = 0.600f;
-    public float initialXpos = 0f;
-    public float initialYpos = 0f;
+    
 
     float CalculateScaleFactorY(float screenWidth, float screenHeight)
     {
@@ -38,31 +35,31 @@ public class BoardGenerator : MonoBehaviour
 
         return scaleFactorY;
     }
-    public Board GenerateBoard(float mapSize, CellView hexPrefab)
+    public Board GenerateBoard(float mapSize)
     {
 
-        List<Cell> AllCells = new List<Cell>();
+        List<CellModel> AllCells = new List<CellModel>();
 
         float screenWidth = Screen.width;
         float screenHeight = Screen.height;
         float screenratio = (screenWidth / screenHeight);
-        _cellScaleFactorY = CalculateScaleFactorY(screenWidth, screenHeight);
+        var _cellScaleFactorY = CalculateScaleFactorY(screenWidth, screenHeight);
 
         float yOffset1 = 0f;
-        yOffset1 = yOffset * _cellScaleFactorY;
+        yOffset1 = boardConfig.yOffset * _cellScaleFactorY;
 
-        float xPos = initialXpos;
-        float yPos = initialYpos;
+        float xPos = boardConfig.initialXpos;
+        float yPos = boardConfig.initialYpos;
 
-        var scaleX = hexPrefab.GetComponent<CellView>().transform.localScale.x;
-        var scaleY = hexPrefab.GetComponent<CellView>().transform.localScale.y;
+        var scaleX = boardConfig.cellPrefab.GetComponent<CellView>().transform.localScale.x;
+        var scaleY = boardConfig.cellPrefab.GetComponent<CellView>().transform.localScale.y;
 
         float currentXOffset = 0.0f;
         float currentYOffset = 0.0f;
 
         //Modificamos escala
         if (scaleX != 0)
-            currentXOffset = xOffset - (xOffset * (1f - scaleX));
+            currentXOffset = boardConfig.xOffset - (boardConfig.xOffset * (1f - scaleX));
 
         if (scaleY != 0)
             currentYOffset = yOffset1 - (yOffset1 * (1f - scaleY));
@@ -84,7 +81,7 @@ public class BoardGenerator : MonoBehaviour
                 var posVector = new Vector3(xPos, yPos, 0);
                 var cell = new Cell(0, 0, "Hex_0_0", posVector);
                 // Lo agregamos a la lista
-                AllCells.Add(cell);
+                AllCells.Add(new CellModel(cell));
             }
             else
             {
@@ -120,7 +117,7 @@ public class BoardGenerator : MonoBehaviour
                     var cell = new Cell(level, tileNum, $"Hex_{level}_{tileNum}", posVector);
 
                     // Lo agregamos a la lista
-                    AllCells.Add(cell);
+                    AllCells.Add(new CellModel(cell));
 
                     //Calculamos los valore de xMultipler y yMultipler para calcular la posición de la próxima celda
                     if (tileNum < level)
@@ -209,13 +206,11 @@ public class BoardGenerator : MonoBehaviour
         List<CellView> cellViews = new List<CellView>(); // To associate Cell data with CellView instances
         foreach (var cell in AllCells)
         {
-            var ubicatePos = new Vector3(cell.Position.x, cell.Position.y, cell.Position.z);
-            // Crear la vista
-            var view = GameObject.Instantiate(boardConfig.cellPrefab, ubicatePos, Quaternion.identity, transform);
+            cellViews.Add(new CellView(cell, boardConfig.cellPrefab, boardConfig.boardParent));
 
         }
 
-        return new Board(AllCells);
+        return new Board(cellViews);
 
     }
 
@@ -223,7 +218,7 @@ public class BoardGenerator : MonoBehaviour
     /// <summary>
     /// Método para asiganar las celdas vecinas de cada celda del tablero
     /// </summary>
-    public void AssignTileNeighbors(List<Cell> AllCells)
+    public void AssignTileNeighbors(List<CellModel> AllCells)
     {
 
         foreach (var tile in AllCells)

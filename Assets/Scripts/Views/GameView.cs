@@ -38,12 +38,12 @@ public class GameView : MonoBehaviour
     public void InitializeBoard(Board board)
     {
         // Assuming you have a CellView component attached to your Cell prefab
-        foreach (Cell cell in board.cells)
-        {
-            GameObject cellGO = Instantiate(boardConfig.cellPrefab, boardContainer);
-            CellView cellView = cellGO.GetComponent<CellView>();
-            cellView.Initialize(cell);
-            // ... position the cell based on cell.x and cell.y
-        }
+        //foreach (CellView cell in board.cells)
+        //{
+        //    GameObject cellGO = Instantiate(boardConfig.cellPrefab, boardContainer);
+        //    CellView cellView = cellGO.GetComponent<CellView>();
+        //    cellView.Initialize(cell);
+        //    // ... position the cell based on cell.x and cell.y
+        //}
     }
 }

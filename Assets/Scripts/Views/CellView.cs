@@ -1,3 +1,4 @@
+using Assets.Scripts.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,21 +6,29 @@ using UnityEngine.UI;
 public class CellView : MonoBehaviour
 {
     public TextMeshProUGUI letterText;
+    public CellModel cellModel;
+    public Sprite sprite;
 
-    public Cell cellData;
+    private GameObject view;
 
-    public void Initialize(Cell cell)
+    public CellView(CellModel cellModel, GameObject cellPrefab, Transform parent)
     {
-        cellData = cell;
-        letterText.text = cell.CurrentLetter;
-        // ... other initializations
+        this.cellModel = cellModel;
+        letterText.text = cellModel.CurrentLetter;
+
+        //Instanciar celda en tablero
+        var ubicatePos = new Vector3(cellModel.Position.x, cellModel.Position.y, cellModel.Position.z);
+        // Crear la vista
+        view = GameObject.Instantiate(cellPrefab, ubicatePos, Quaternion.identity, parent);
+
     }
 
-    // Method to handle cell click
-    public void OnCellClicked()
+    // Método para actualizar la UI en base a los datos del modelo
+    public void UpdateView()
     {
-        // Send an event or call a method in the BoardController
-        // For example, using a UnityEvent:
-        // cellClickedEvent.Invoke(cellData);
+        if (cellModel != null)
+        {
+            letterText.text = cellModel.CurrentLetter;
+        }
     }
 }

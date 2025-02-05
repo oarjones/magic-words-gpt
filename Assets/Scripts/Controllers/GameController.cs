@@ -139,46 +139,46 @@ public class GameController : MonoBehaviour
         Player player = playerId == gameModel.player1.id ? gameModel.player1 : gameModel.player2;
         string languageCode = "es-ES"; // Example language code, should be configurable
 
-        if (dictionaryService.IsValidWord(player.currentWord, languageCode))
-        {
-            // Update player score
-            player.score += player.currentWord.Length;
+        //if (dictionaryService.IsValidWord(player.currentWord, languageCode))
+        //{
+        //    // Update player score
+        //    player.score += player.currentWord.Length;
 
-            // Check if the player has reached a goal cell
-            if (player.currentCell.isObjective)
-            {
-                gameModel.gameState = GameState.Ended;
-                gameView.ShowGameEndScreen(player.id); // Show the end game screen with the current player as the winner
-                return; // Exit the method early since the game has ended
-            }
+        //    // Check if the player has reached a goal cell
+        //    if (player.currentCell.isObjective)
+        //    {
+        //        gameModel.gameState = GameState.Ended;
+        //        gameView.ShowGameEndScreen(player.id); // Show the end game screen with the current player as the winner
+        //        return; // Exit the method early since the game has ended
+        //    }
 
-            // Reset the current word to the last selected cell's letter
-            player.currentWord = player.currentCell.letter;
+        //    // Reset the current word to the last selected cell's letter
+        //    player.currentWord = player.currentCell.letter;
 
-            // Update the player data in the backend
-            backendService.UpdatePlayer(player, (success) =>
-            {
-                if (!success)
-                {
-                    Debug.LogError("Failed to update player data.");
-                }
-            });
+        //    // Update the player data in the backend
+        //    backendService.UpdatePlayer(player, (success) =>
+        //    {
+        //        if (!success)
+        //        {
+        //            Debug.LogError("Failed to update player data.");
+        //        }
+        //    });
 
-            // Update the view
-            gameView.UpdateScore(playerId, player.score);
-            gameView.UpdateWord(playerId, player.currentWord);
-        }
-        else
-        {
-            // Reset the current word to the last selected cell's letter
-            player.currentWord = player.currentCell.letter;
+        //    // Update the view
+        //    gameView.UpdateScore(playerId, player.score);
+        //    gameView.UpdateWord(playerId, player.currentWord);
+        //}
+        //else
+        //{
+        //    // Reset the current word to the last selected cell's letter
+        //    player.currentWord = player.currentCell.letter;
 
-            // Update the view
-            gameView.UpdateWord(playerId, player.currentWord);
+        //    // Update the view
+        //    gameView.UpdateWord(playerId, player.currentWord);
 
-            // Optionally, provide feedback that the word is invalid
-            // This could be a visual indicator or a sound
-        }
+        //    // Optionally, provide feedback that the word is invalid
+        //    // This could be a visual indicator or a sound
+        //}
     }
 
     public void HandleCellSelection(Cell selectedCell)
@@ -189,29 +189,29 @@ public class GameController : MonoBehaviour
         Player currentPlayer = DetermineCurrentPlayer();
 
         // Check if the selected cell is adjacent to the current cell and not occupied
-        if (currentPlayer.currentCell != null &&
-            gameModel.board.GetNeighboringCells(currentPlayer.currentCell).Contains(selectedCell) &&
-            !selectedCell.isOccupied)
-        {
-            // Update the player's current cell and word
-            currentPlayer.currentCell = selectedCell;
-            currentPlayer.currentWord += selectedCell.letter;
+        //if (currentPlayer.currentCell != null &&
+        //    gameModel.board.GetNeighboringCells(currentPlayer.currentCell).Contains(selectedCell) &&
+        //    !selectedCell.isOccupied)
+        //{
+        //    // Update the player's current cell and word
+        //    currentPlayer.currentCell = selectedCell;
+        //    currentPlayer.currentWord += selectedCell.letter;
 
-            // Mark the cell as occupied
-            selectedCell.isOccupied = true;
+        //    // Mark the cell as occupied
+        //    selectedCell.isOccupied = true;
 
-            // Update the view
-            gameView.UpdateWord(currentPlayer.id, currentPlayer.currentWord);
+        //    // Update the view
+        //    gameView.UpdateWord(currentPlayer.id, currentPlayer.currentWord);
 
-            // Optionally, update the player's position in the backend
-            backendService.UpdatePlayer(currentPlayer, (success) =>
-            {
-                if (!success)
-                {
-                    Debug.LogError("Failed to update player data.");
-                }
-            });
-        }
+        //    // Optionally, update the player's position in the backend
+        //    backendService.UpdatePlayer(currentPlayer, (success) =>
+        //    {
+        //        if (!success)
+        //        {
+        //            Debug.LogError("Failed to update player data.");
+        //        }
+        //    });
+        //}
     }
 
     private Player DetermineCurrentPlayer()

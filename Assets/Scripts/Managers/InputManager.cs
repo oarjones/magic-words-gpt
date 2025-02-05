@@ -1,8 +1,9 @@
+using Assets.Scripts.Models;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
-    public event System.Action<Cell> OnCellClicked;
+    public event System.Action<CellModel> OnCellClicked;
 
     private void Update()
     {
@@ -21,7 +22,7 @@ public class InputManager : MonoBehaviour
                 if (cellView != null)
                 {
                     // Invoke the OnCellClicked event with the cell data
-                    OnCellClicked?.Invoke(cellView.cellData);
+                    OnCellClicked?.Invoke(cellView.cellModel);
                 }
             }
         }
