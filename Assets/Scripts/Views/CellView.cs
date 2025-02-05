@@ -11,7 +11,7 @@ public class CellView : MonoBehaviour
     public void Initialize(Cell cell)
     {
         cellData = cell;
-        letterText.text = cell.letter;
+        letterText.text = cell.CurrentLetter;
         // ... other initializations
     }
 
