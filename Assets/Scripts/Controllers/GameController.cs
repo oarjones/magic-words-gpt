@@ -35,7 +35,7 @@ public class GameController : MonoBehaviour
 
         // Initialize the board through BoardController
         boardController.Initialize(inputManager, boardGenerator, gameModel);
-        boardController.InitializeBoard();
+        boardController.InitializeBoard(gameConfig.selectedGameMode);
         this.gameView.InitializeBoard(gameModel.board); // Now GameModel is available for the View
         this.gameView.UpdateTimer(gameModel.remainingTime);
 

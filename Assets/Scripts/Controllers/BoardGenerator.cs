@@ -35,7 +35,7 @@ public class BoardGenerator : MonoBehaviour
 
         return scaleFactorY;
     }
-    public Board GenerateBoard(float mapSize)
+    public Board GenerateBoard(float mapSize, GameMode selectedGameMode)
     {
 
         List<CellModel> AllCells = new List<CellModel>();

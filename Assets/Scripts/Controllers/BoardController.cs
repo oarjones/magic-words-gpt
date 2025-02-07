@@ -16,10 +16,10 @@ public class BoardController : MonoBehaviour
         inputManager.OnCellClicked += HandleCellClicked;
     }
 
-    public void InitializeBoard()
+    public void InitializeBoard(GameMode selectedGameMode)
     {
         // Generate the board using the BoardGenerator
-        gameModel.board = boardGenerator.GenerateBoard(boardConfig.mapSize);
+        gameModel.board = boardGenerator.GenerateBoard(boardConfig.mapSize, selectedGameMode);
     }
 
     private void HandleCellClicked(Cell cell)

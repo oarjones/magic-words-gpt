@@ -47,7 +47,7 @@ public class PvPGameMode : IGameMode
             }
 
             // Create a new board with the specified configuration
-            Board board = CreateBoard(boardConfig);
+            Board board = CreateBoard(boardConfig, gameConfig.selectedGameMode);
 
             // Create and return a new GameModel
             return new GameModel(board, player1, player2, gameConfig);
@@ -78,7 +78,7 @@ public class PvPGameMode : IGameMode
         });
     }
 
-    private Board CreateBoard(BoardConfig boardConfig)
+    private Board CreateBoard(BoardConfig boardConfig, GameMode selectedGameMode)
     {
         //// Generate a new board based on boardConfig
         //Cell[,] cells = new Cell[boardConfig.boardWidth, boardConfig.boardHeight];
@@ -93,7 +93,7 @@ public class PvPGameMode : IGameMode
         //}
         //return new Board(cells);
 
-        return new BoardGenerator().GenerateBoard(boardConfig.mapSize);
+        return new BoardGenerator().GenerateBoard(boardConfig.mapSize, selectedGameMode);
     }
 
     private CellView GetInitialCellForPlayer(BoardConfig boardConfig, bool isPlayer1)

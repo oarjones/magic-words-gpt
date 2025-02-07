@@ -1,3 +1,6 @@
+using Assets.Scripts.Models;
+using System.Diagnostics.CodeAnalysis;
+
 public class PvAlgorithmGameMode : IGameMode
 {
     private string playerId;
@@ -9,42 +12,28 @@ public class PvAlgorithmGameMode : IGameMode
 
     public GameModel CreateGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService, IDictionaryService dictionaryService)
     {
+        // Create a new board with the specified configuration
+        Board board = CreateBoard(boardConfig, gameConfig);
+
         // Initialize player
-        Player player1 = new Player(playerId, "Player 1", GetInitialCellForPlayer(boardConfig, true));
+        Player player1 = new Player(playerId, "Player 1", GetInitialCellForPlayer(board, boardConfig, true));
 
         // Initialize algorithm as a player
-        Player player2 = new Player("algorithm", "Algorithm", GetInitialCellForPlayer(boardConfig, false));
-
-        // Create a new board with the specified configuration
-        Board board = CreateBoard(boardConfig);
+        Player player2 = new Player("algorithm", "Algorithm", GetInitialCellForPlayer(board, boardConfig, false));
 
         // Create and return a new GameModel
         return new GameModel(board, player1, player2, gameConfig);
     }
 
-    private Board CreateBoard(BoardConfig boardConfig)
+    private Board CreateBoard(BoardConfig boardConfig, GameConfig gameConfig)
     {
-        // Generate a new board based on boardConfig
-        Cell[,] cells = new Cell[boardConfig.boardWidth, boardConfig.boardHeight];
-        for (int x = 0; x < boardConfig.boardWidth; x++)
-        {
-            for (int y = 0; y < boardConfig.boardHeight; y++)
-            {
-                // Example letter, replace with your logic to assign letters
-                string letter = GetRandomLetter();
-                cells[x, y] = new Cell(x, y, letter);
-            }
-        }
-        return new Board(cells);
+        return new BoardGenerator().GenerateBoard(boardConfig.mapSize, gameConfig.selectedGameMode);
     }
 
-    private Cell GetInitialCellForPlayer(BoardConfig boardConfig, bool isPlayer1)
+    private CellView GetInitialCellForPlayer(Board board, BoardConfig boardConfig, bool isPlayer1)
     {
-        // Determine initial cell based on player number and board configuration
-        // This is a simple example, you might want to make it more sophisticated
-        int x = isPlayer1 ? 0 : boardConfig.boardWidth - 1;
-        int y = isPlayer1 ? 0 : boardConfig.boardHeight - 1;
-        return new Cell(x, y, GetRandomLetter());
+        //TODO: implement logic to get the initial cell for the player
+        return null;
     }
 
     private string GetRandomLetter()
