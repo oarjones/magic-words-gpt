@@ -4,24 +4,24 @@ using UnityEngine;
 public class InputManager : MonoBehaviour
 {
     public event System.Action<CellModel> OnCellClicked;
+    //Ya no necesitamos el LayerMask en 2D.
+    //public LayerMask cellLayerMask; // Ya no es necesario en 2D
 
     private void Update()
     {
-        // Check for mouse click
-        if (Input.GetMouseButtonDown(0)) // 0 is the left mouse button
+        if (Input.GetMouseButtonDown(0))
         {
-            // Cast a ray from the camera to the mouse position
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
+            // Convierte la posición del mouse a coordenadas del mundo (2D)
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-            // Check if the ray hits any collider
-            if (Physics.Raycast(ray, out hit))
+            // Usa Physics2D.Raycast
+            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero); // Rayo desde la posición del mouse en dirección "cero"
+
+            if (hit.collider != null)
             {
-                // Check if the hit object has a CellView component
                 CellView cellView = hit.collider.GetComponent<CellView>();
                 if (cellView != null)
                 {
-                    // Invoke the OnCellClicked event with the cell data
                     OnCellClicked?.Invoke(cellView.cellModel);
                 }
             }

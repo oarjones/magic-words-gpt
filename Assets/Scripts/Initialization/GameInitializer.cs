@@ -9,13 +9,14 @@ public class GameInitializer : MonoBehaviour
     [SerializeField] private DictionaryConfig dictionaryConfig;
     [SerializeField] private GameObject gameView;
     [SerializeField] private BoardGenerator boardGenerator;
+    [SerializeField] private InputManager inputManager;
 
     private FirebaseController firebaseController;
     private DictionaryController dictionaryController;
     private GameController gameController;
     private BoardController boardController;
     private MatchmakingController matchmakingController;
-    private InputManager inputManager;
+    
     
 
     private void Awake()
@@ -27,8 +28,6 @@ public class GameInitializer : MonoBehaviour
         GameModeManager.Instance.SetGameMode((GameMode)Enum.Parse(typeof(GameMode), gameModeString)); 
         gameConfig.selectedGameMode = GameModeManager.Instance.SelectedGameMode;
 
-        // Initialize input manager
-        inputManager = gameObject.AddComponent<InputManager>();
 
         // Initialize Firebase
         firebaseController = gameObject.AddComponent<FirebaseController>();

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3303716920036334610}
   - component: {fileID: 6279278290167609378}
   - component: {fileID: 2249230441215493843}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -146,7 +146,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5064365968761944980}
   - component: {fileID: 8047606793199325986}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: Hexagon Flat Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -239,7 +239,7 @@ GameObject:
   - component: {fileID: 7064590375103957944}
   - component: {fileID: 8860611431135307807}
   - component: {fileID: 353348759294167541}
-  m_Layer: 5
+  m_Layer: 6
   m_Name: HexCellPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -254,7 +254,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7887786759568585986}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0.1}
   m_LocalScale: {x: 1.25, y: 1.0102164, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -296,11 +296,11 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 1
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: -0.17964172, y: -0.6668186}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -310,7 +310,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 100, y: 100}
+  m_Size: {x: 102.87454, y: 91.99727}
   m_EdgeRadius: 0
 --- !u!114 &353348759294167541
 MonoBehaviour:
