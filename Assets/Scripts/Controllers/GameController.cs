@@ -18,13 +18,12 @@ public class GameController : MonoBehaviour
     private BoardController boardController;
     
 
-    public void Initialize(IBackendService backendService, IDictionaryService dictionaryService, BoardGenerator boardGenerator, 
+    public void Initialize(IBackendService backendService, IDictionaryService dictionaryService,
         InputManager inputManager, MatchmakingController matchmakingController, GameConfig gameConfig, BoardConfig boardConfig, 
         GameModel gameModel, BoardController boardController, GameObject gameView)
     {
         this.backendService = backendService;
         this.dictionaryService = dictionaryService;
-        this.boardGenerator = boardGenerator;
         this.inputManager = inputManager;
         this.matchmakingController = matchmakingController;
         this.gameConfig = gameConfig;
@@ -34,8 +33,9 @@ public class GameController : MonoBehaviour
         this.gameView = gameView.GetComponent<GameView>();
 
         // Initialize the board through BoardController
-        boardController.Initialize(inputManager, boardGenerator, gameModel);
-        boardController.InitializeBoard(gameConfig.selectedGameMode);
+        boardController.Initialize(inputManager, gameModel);
+        
+
         this.gameView.InitializeBoard(gameModel.board); // Now GameModel is available for the View
         this.gameView.UpdateTimer(gameModel.remainingTime);
 
@@ -66,7 +66,7 @@ public class GameController : MonoBehaviour
                 playerId = GetPlayerId(); // Implement this to get the current player's ID
                 string opponentId = GetOpponentId(); // Implement this to get the opponent's ID
                 return new PvPGameMode(playerId, opponentId, backendService);
-            case GameMode.PvE:
+            case GameMode.PvA:
                 playerId = GetPlayerId();
                 return new PvAlgorithmGameMode(playerId);
             default:
@@ -101,7 +101,7 @@ public class GameController : MonoBehaviour
         gameView.UpdateTimer(gameModel.remainingTime);
 
         // Check if the game has ended
-        if (gameModel.gameState == GameState.Ended)
+        if (gameModel.gameState == GameState.GameOver)
         {
             gameView.ShowGameEndScreen(gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id);
         }
@@ -122,7 +122,7 @@ public class GameController : MonoBehaviour
 
             if (gameModel.remainingTime <= 0f)
             {
-                gameModel.gameState = GameState.Ended;
+                gameModel.gameState = GameState.GameOver;
                 // Determine the winner based on score
                 string winnerId = gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id;
                 if (gameModel.player1.score == gameModel.player2.score)

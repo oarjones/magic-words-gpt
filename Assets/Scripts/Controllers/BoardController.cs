@@ -7,20 +7,16 @@ public class BoardController : MonoBehaviour
     private BoardGenerator boardGenerator;
     private BoardConfig boardConfig;
 
-    public void Initialize(InputManager inputManager, BoardGenerator boardGenerator, GameModel gameModel)
+    public void Initialize(InputManager inputManager, GameModel gameModel)
     {
         this.inputManager = inputManager;
-        this.boardGenerator = boardGenerator;
         this.gameModel = gameModel;
+
         // Subscribe to the OnCellClicked event from InputManager
         inputManager.OnCellClicked += HandleCellClicked;
     }
 
-    public void InitializeBoard(GameMode selectedGameMode)
-    {
-        // Generate the board using the BoardGenerator
-        gameModel.board = boardGenerator.GenerateBoard(boardConfig.mapSize, selectedGameMode);
-    }
+    
 
     private void HandleCellClicked(Cell cell)
     {

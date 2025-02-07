@@ -6,7 +6,7 @@ public class BoardConfig : ScriptableObject
     public int mapSize = 7;
     public GameObject cellPrefab;
     public float cellSpacing = 1.0f;
-    public Transform boardParent = null;
+    
     
     public float xOffset = 0.400f;
     public float yOffset = 0.600f;

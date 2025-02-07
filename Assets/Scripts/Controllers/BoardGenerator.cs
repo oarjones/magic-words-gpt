@@ -7,9 +7,9 @@ using UnityEngine.Rendering;
 public class BoardGenerator : MonoBehaviour
 {
     public BoardConfig boardConfig; // Asigna el ScriptableObject BoardConfig en el Inspector
+    public Transform boardParent = null;
 
 
-    
 
     float CalculateScaleFactorY(float screenWidth, float screenHeight)
     {
@@ -206,7 +206,9 @@ public class BoardGenerator : MonoBehaviour
         List<CellView> cellViews = new List<CellView>(); // To associate Cell data with CellView instances
         foreach (var cell in AllCells)
         {
-            cellViews.Add(new CellView(cell, boardConfig.cellPrefab, boardConfig.boardParent));
+            CellView cellView = boardConfig.cellPrefab.GetComponent<CellView>();
+            cellView.Initialize(cell, boardConfig.cellPrefab, boardParent);
+            cellViews.Add(cellView);
 
         }
 

@@ -10,6 +10,7 @@ public class PvPGameMode : IGameMode
     private string playerId;
     private string opponentId;
     private IBackendService backendService;
+    private BoardGenerator boardGenerator;
 
     public PvPGameMode(string playerId, string opponentId, IBackendService backendService)
     {
@@ -18,8 +19,11 @@ public class PvPGameMode : IGameMode
         this.backendService = backendService;
     }
 
-    public GameModel CreateGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService, IDictionaryService dictionaryService)
+    public GameModel CreateGame(GameConfig gameConfig, BoardConfig boardConfig, 
+        IBackendService backendService, IDictionaryService dictionaryService, BoardGenerator boardGenerator)
     {
+        this.boardGenerator = boardGenerator;
+
         // Initialize players from backend data
         Task<Player> player1Task = GetPlayerWithTask(backendService, playerId);
         Task<Player> player2Task = GetPlayerWithTask(backendService, opponentId);
@@ -47,7 +51,7 @@ public class PvPGameMode : IGameMode
             }
 
             // Create a new board with the specified configuration
-            Board board = CreateBoard(boardConfig, gameConfig.selectedGameMode);
+            Board board = CreateBoard(boardConfig);
 
             // Create and return a new GameModel
             return new GameModel(board, player1, player2, gameConfig);
@@ -78,22 +82,9 @@ public class PvPGameMode : IGameMode
         });
     }
 
-    private Board CreateBoard(BoardConfig boardConfig, GameMode selectedGameMode)
+    private Board CreateBoard(BoardConfig boardConfig)
     {
-        //// Generate a new board based on boardConfig
-        //Cell[,] cells = new Cell[boardConfig.boardWidth, boardConfig.boardHeight];
-        //for (int x = 0; x < boardConfig.boardWidth; x++)
-        //{
-        //    for (int y = 0; y < boardConfig.boardHeight; y++)
-        //    {
-        //        // Example letter, replace with your logic to assign letters
-        //        string letter = GetRandomLetter();
-        //        cells[x, y] = new Cell(x, y, letter);
-        //    }
-        //}
-        //return new Board(cells);
-
-        return new BoardGenerator().GenerateBoard(boardConfig.mapSize, selectedGameMode);
+        return boardGenerator.GenerateBoard(boardConfig.mapSize, GameMode.PvP);
     }
 
     private CellView GetInitialCellForPlayer(BoardConfig boardConfig, bool isPlayer1)

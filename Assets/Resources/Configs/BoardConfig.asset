@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31749a16db495c5479c0a0ab630e0b54, type: 3}
   m_Name: BoardConfig
   m_EditorClassIdentifier: 
-  boardWidth: 7
-  boardHeight: 7
+  mapSize: 4
   cellPrefab: {fileID: 7887786759568585986, guid: 45b1491ef751839439b2e61d8a9f156c, type: 3}
   cellSpacing: 1
+  xOffset: 0.4
+  yOffset: 0.6
+  initialXpos: 0
+  initialYpos: 0

@@ -12,6 +12,19 @@ namespace Assets.Scripts.Models
     {
         public CellModel(Cell cell) : base(cell.Level, cell.TileNumber, cell.Name, cell.Position)
         {
+            InitializeLetter();
+        }
+
+        private void InitializeLetter()
+        {
+            this.CurrentLetter = GetRandomLetter();
+        }
+
+        private string GetRandomLetter()
+        {
+            // Logic to return a random letter, you can use your own logic here
+            const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            return letters[UnityEngine.Random.Range(0, letters.Length)].ToString();
         }
 
 

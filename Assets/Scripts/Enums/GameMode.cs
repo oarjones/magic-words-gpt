@@ -2,5 +2,5 @@
 public enum GameMode
 {
     PvP,
-    PvE
+    PvA
 }
