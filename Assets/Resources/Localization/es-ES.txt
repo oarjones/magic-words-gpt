@@ -1,0 +1,7 @@
+game_title=Magic Words
+start_button=Comenzar
+pause_button=Pausa
+resume_button=Reanudar
+score_label=Puntuación:
+pvp=pvp_ES
+pva=pva_ES

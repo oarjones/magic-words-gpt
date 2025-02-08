@@ -1,9 +1,12 @@
 ﻿// En GameMenuController.cs
+using Assets.Scripts.Managers;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameMenuController : MonoBehaviour
 {
+
     public void StartPvAGame()
     {
         PlayerPrefs.SetString("GameMode", "PvA"); // Guarda la selección
