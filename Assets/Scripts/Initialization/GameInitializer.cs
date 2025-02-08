@@ -1,3 +1,4 @@
+using Assets.Scripts.Managers;
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -16,16 +17,49 @@ public class GameInitializer : MonoBehaviour
     private GameController gameController;
     private BoardController boardController;
     private MatchmakingController matchmakingController;
-    
-    
+    private GameMode mode = GameMode.PvA;
 
-    private void Awake()
+
+
+    private void OnEnable()
     {
         // Recupera el GameMode de los parámetros
         string gameModeString = PlayerPrefs.GetString("GameMode", "PvA"); // Valor por defecto: PvA
-        
+        mode = (GameMode)Enum.Parse(typeof(GameMode), gameModeString);
+
+        // Si el modo de juego es PvP, se espera a que Firebase se inicialice antes de continuar
+        if (mode == GameMode.PvP)
+        {
+            FirebaseInitializer firebaseInitializer = FindFirstObjectByType<FirebaseInitializer>();
+            if (firebaseInitializer != null)
+            {
+                firebaseInitializer.OnFirebaseInitialized += FirebaseInitialized;
+            }
+        }
+        else
+        {
+            FirebaseInitialized();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (mode == GameMode.PvP)
+        {
+            FirebaseInitializer firebaseInitializer = FindFirstObjectByType<FirebaseInitializer>();
+            if (firebaseInitializer != null)
+            {
+                firebaseInitializer.OnFirebaseInitialized -= FirebaseInitialized;
+            }
+        }
+    }
+
+    private void FirebaseInitialized()
+    {
+        GetTestUser();
+
         // Se establece y guarda el modo de juego seleccionado
-        GameModeManager.Instance.SetGameMode((GameMode)Enum.Parse(typeof(GameMode), gameModeString)); 
+        GameModeManager.Instance.SetGameMode(mode);
         gameConfig.selectedGameMode = GameModeManager.Instance.SelectedGameMode;
 
 
@@ -51,16 +85,39 @@ public class GameInitializer : MonoBehaviour
 
         // Initialize controllers after creating GameModel
         gameController.Initialize(firebaseController, dictionaryController, inputManager, matchmakingController, gameConfig, boardConfig, gameModel, boardController, gameView);
-        
+    }
 
+    private void GetTestUser()
+    {
+        Firebase.Auth.FirebaseAuth auth = FirebaseInitializer.auth;
+        AuthFirebaseManager authFirebaseManager = FindFirstObjectByType<AuthFirebaseManager>();
+
+#if UNITY_EDITOR
+        if (auth.CurrentUser == null || auth.CurrentUser.Email != "oarjones@gmail.com")
+        {
+            if (auth.CurrentUser != null)
+            {
+                auth.SignOut();
+            }
+
+            authFirebaseManager.OnSignInWithEmailAndPasswordAsync("oarjones@gmail.com", "Am1lcarbarca");
+        }
+#else
+            
+        if (auth.CurrentUser == null || auth.CurrentUser.Email != "manuelp@gmail.com")
+        {
+            if (auth.CurrentUser != null)
+            {
+                auth.SignOut();
+            }
+
+            authFirebaseManager.OnSignInWithEmailAndPasswordAsync("manuelp@gmail.com", "Am1lcarbarca");
+        }
+#endif
     }
 
     private void InitializeGame()
     {
-        
-
-        
-
         // If PvP, start matchmaking
         if (GameModeManager.Instance.SelectedGameMode == GameMode.PvP)
         {
