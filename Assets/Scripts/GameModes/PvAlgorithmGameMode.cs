@@ -1,33 +1,35 @@
+using Assets.Scripts.Managers;
 using Assets.Scripts.Models;
+using Firebase.Auth;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 public class PvAlgorithmGameMode : IGameMode
 {
     private BoardGenerator boardGenerator;
-    private string playerId;
-
-    public PvAlgorithmGameMode(string playerId)
+    private FirebaseUser user;
+    public void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService, 
+        IDictionaryService dictionaryService, BoardGenerator boardGenerator, System.Action<GameModel> onGameStarted)
     {
-        this.playerId = playerId;
-    }
 
-    public GameModel CreateGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService, 
-        IDictionaryService dictionaryService, BoardGenerator boardGenerator)
-    {
+        user = FirebaseAuth.DefaultInstance.CurrentUser;
+
         this.boardGenerator = boardGenerator;
 
         // Create a new board with the specified configuration
         Board board = CreateBoard(boardConfig);
 
         // Initialize player
-        Player player1 = new Player(playerId, "Player 1", GetInitialCellForPlayer(board, boardConfig, true));
+        Player player = new Player(user.UserId, user.DisplayName, GetInitialCellForPlayer(board, boardConfig, true));
 
         // Initialize algorithm as a player
-        Player player2 = new Player("algorithm", "Algorithm", GetInitialCellForPlayer(board, boardConfig, false));
+        Player opponent = new Player("algorithm", "Algorithm", GetInitialCellForPlayer(board, boardConfig, false));
 
         // Create and return a new GameModel
-        return new GameModel(board, player1, player2, gameConfig);
+        var gameModel = new GameModel(board, player, opponent, gameConfig);
+
+        onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
+        
     }
 
     private Board CreateBoard(BoardConfig boardConfig)

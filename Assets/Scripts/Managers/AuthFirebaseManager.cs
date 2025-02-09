@@ -1,4 +1,5 @@
 ﻿using Firebase;
+using Firebase.Auth;
 using Firebase.Extensions;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Assets.Scripts.Managers
 {
     public class AuthFirebaseManager : MonoBehaviour
     {
-        string userId;
+        public static FirebaseUser user { get; set; }
 
         // Create a user with the email and password.
         public void OnCreateUserWithEmailAsync(string email, string password, string username)
@@ -22,7 +23,7 @@ namespace Assets.Scripts.Managers
             FirebaseInitializer.auth.CreateUserWithEmailAndPasswordAsync(email, password)
               .ContinueWithOnMainThread((task) => {
 
-                  var user = task.Result;
+                  user = task.Result.User;
                   //GameEvents.OnCreateUserMethod(user.User.UserId, username, email);
 
                   return task;
@@ -39,7 +40,7 @@ namespace Assets.Scripts.Managers
             FirebaseInitializer.auth.SignInWithEmailAndPasswordAsync(email, password)
               .ContinueWithOnMainThread((task) => {
 
-                  var user = task.Result;
+                  var user = task.Result.User;
                   //GameEvents.OnSignInMethod(user.User.UserId, email);
 
                   return task;

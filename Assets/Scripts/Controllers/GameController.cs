@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
 
 public class GameController : MonoBehaviour
 {
@@ -16,11 +17,12 @@ public class GameController : MonoBehaviour
     private MatchmakingController matchmakingController;
     private BoardGenerator boardGenerator;
     private BoardController boardController;
-    
+
+    private GameStatus currentState = GameStatus.Pending;
 
     public void Initialize(IBackendService backendService, IDictionaryService dictionaryService,
-        InputManager inputManager, MatchmakingController matchmakingController, GameConfig gameConfig, BoardConfig boardConfig, 
-        GameModel gameModel, BoardController boardController, GameObject gameView)
+        InputManager inputManager, MatchmakingController matchmakingController, GameConfig gameConfig, BoardConfig boardConfig,
+        GameModel gameModel, BoardController boardController, GameObject gameView, IGameMode gameMode)
     {
         this.backendService = backendService;
         this.dictionaryService = dictionaryService;
@@ -31,20 +33,19 @@ public class GameController : MonoBehaviour
         this.gameModel = gameModel;
         this.boardController = boardController;
         this.gameView = gameView.GetComponent<GameView>();
+        this.gameMode = gameMode;
 
         // Initialize the board through BoardController
         boardController.Initialize(inputManager, gameModel);
-        
-
         this.gameView.InitializeBoard(gameModel.board); // Now GameModel is available for the View
         this.gameView.UpdateTimer(gameModel.remainingTime);
 
-        StartCoroutine(InitializeGame());
+        UpdateGameState(GameStatus.Loading);
     }
     private IEnumerator InitializeGame()
     {
         // Set the game state to Playing after initialization
-        gameModel.gameState = GameState.Playing;
+        gameModel.gameState = GameStatus.Playing;
 
         // Start listening for game updates if in PvP mode
         if (gameConfig.selectedGameMode == GameMode.PvP)
@@ -55,38 +56,54 @@ public class GameController : MonoBehaviour
         yield return null;
     }
 
-    private IGameMode CreateGameMode(GameMode gameMode, IBackendService backendService)
-    {
-        string playerId = string.Empty;
 
-        switch (gameMode)
+
+    public void UpdateGameState(GameStatus newState)
+    {
+        currentState = newState;
+        switch (currentState)
         {
-            case GameMode.PvP:
-                // Assuming you have a way to get the opponent ID, e.g., from matchmaking
-                playerId = GetPlayerId(); // Implement this to get the current player's ID
-                string opponentId = GetOpponentId(); // Implement this to get the opponent's ID
-                return new PvPGameMode(playerId, opponentId, backendService);
-            case GameMode.PvA:
-                playerId = GetPlayerId();
-                return new PvAlgorithmGameMode(playerId);
-            default:
-                throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
+            case GameStatus.Loading:
+                HandleStartingState();
+                break;
+
+            case GameStatus.WaitingForPlayers:
+                HandleWaitingForPlayersState();
+                break;
+
+            case GameStatus.Playing:
+                HandlePlayingState();
+                break;
+
+            case GameStatus.GameOver:
+                HandleGameOverState();
+                break;
         }
     }
 
-    private string GetPlayerId()
+
+    private void HandleStartingState()
     {
-        // Return a unique identifier for the player
-        // This could be a Firebase User ID, PlayerPrefs value, or any other unique identifier
-        return SystemInfo.deviceUniqueIdentifier; // Example using the device's unique identifier
+        // Lógica de inicialización
+        Debug.Log("Game State: Starting");
+        gameView.InitializeView(); 
     }
 
-    private string GetOpponentId()
+    private void HandleWaitingForPlayersState()
     {
-        // If you have a matchmaking system, this is where you would retrieve the opponent's ID
-        // For this example, we'll return a placeholder
-        return "opponent-placeholder-id";
+        Debug.Log("Game State: WaitingForPlayers");
     }
+    private void HandlePlayingState()
+    {
+        Debug.Log("Game State: Playing");
+    }
+    private void HandleGameOverState()
+    {
+        Debug.Log("Game State: GameOver");
+    }
+
+
+
 
     private void OnGameUpdated(GameModel updatedGameModel)
     {
@@ -101,7 +118,7 @@ public class GameController : MonoBehaviour
         gameView.UpdateTimer(gameModel.remainingTime);
 
         // Check if the game has ended
-        if (gameModel.gameState == GameState.GameOver)
+        if (gameModel.gameState == GameStatus.GameOver)
         {
             gameView.ShowGameEndScreen(gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id);
         }
@@ -115,14 +132,14 @@ public class GameController : MonoBehaviour
 
     private void Update()
     {
-        if (gameModel.gameState == GameState.Playing)
+        if (gameModel.gameState == GameStatus.Playing)
         {
             gameModel.remainingTime -= Time.deltaTime;
             gameView.UpdateTimer(gameModel.remainingTime);
 
             if (gameModel.remainingTime <= 0f)
             {
-                gameModel.gameState = GameState.GameOver;
+                gameModel.gameState = GameStatus.GameOver;
                 // Determine the winner based on score
                 string winnerId = gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id;
                 if (gameModel.player1.score == gameModel.player2.score)
@@ -147,7 +164,7 @@ public class GameController : MonoBehaviour
         //    // Check if the player has reached a goal cell
         //    if (player.currentCell.isObjective)
         //    {
-        //        gameModel.gameState = GameState.Ended;
+        //        gameModel.gameState = GameStatus.Ended;
         //        gameView.ShowGameEndScreen(player.id); // Show the end game screen with the current player as the winner
         //        return; // Exit the method early since the game has ended
         //    }

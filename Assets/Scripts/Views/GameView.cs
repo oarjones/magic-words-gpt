@@ -14,6 +14,11 @@ public class GameView : MonoBehaviour
     // ... references to other UI elements
     public BoardConfig boardConfig; // Referencia a BoardConfig
 
+    public void InitializeView()
+    {
+        
+    }
+
     public void UpdateScore(string playerId, int score)
     {
         // ... update the score text for the corresponding player

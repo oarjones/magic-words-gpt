@@ -1,4 +1,5 @@
 using Assets.Scripts.Managers;
+using Firebase.Auth;
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -81,17 +82,24 @@ public class GameInitializer : MonoBehaviour
 
         // Create GameMode and GameModel before initializing controllers
         IGameMode gameMode = CreateGameMode(GameModeManager.Instance.SelectedGameMode, firebaseController);
-        GameModel gameModel = gameMode.CreateGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator);
+        //GameModel gameModel = gameMode.InitializeGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator);
 
-        // Initialize controllers after creating GameModel
-        gameController.Initialize(firebaseController, dictionaryController, inputManager, matchmakingController, gameConfig, boardConfig, gameModel, boardController, gameView);
+        
+        gameMode.InitializeGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator , 
+            (GameModel gameModel) => {
+            // Este callback se ejecuta cuando el juego está listo
+            // Initialize controllers after creating GameModel
+            gameController.Initialize(firebaseController, dictionaryController, inputManager, matchmakingController, gameConfig, boardConfig, gameModel, boardController, gameView, gameMode);
+        });
+
+        
     }
 
     private void GetTestUser()
     {
         Firebase.Auth.FirebaseAuth auth = FirebaseInitializer.auth;
         AuthFirebaseManager authFirebaseManager = FindFirstObjectByType<AuthFirebaseManager>();
-
+        
 #if UNITY_EDITOR
         if (auth.CurrentUser == null || auth.CurrentUser.Email != "oarjones@gmail.com")
         {
@@ -135,10 +143,10 @@ public class GameInitializer : MonoBehaviour
                 // Assuming you have a way to get the opponent ID, e.g., from matchmaking
                 playerId = GetPlayerId(); // Implement this to get the current player's ID
                 string opponentId = GetOpponentId(); // Implement this to get the opponent's ID
-                return new PvPGameMode(playerId, opponentId, backendService);
+                return new PvPGameMode();
             case GameMode.PvA:
                 playerId = GetPlayerId();
-                return new PvAlgorithmGameMode(playerId);
+                return new PvAlgorithmGameMode();
             default:
                 throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
         }

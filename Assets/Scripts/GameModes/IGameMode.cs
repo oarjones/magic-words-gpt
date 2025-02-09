@@ -1,5 +1,6 @@
 public interface IGameMode
 {
-    GameModel CreateGame(GameConfig gameConfig, BoardConfig boardConfig, 
-        IBackendService backendService, IDictionaryService dictionaryService, BoardGenerator boardGenerator);
+        
+    void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, 
+        IBackendService backendService, IDictionaryService dictionaryService, BoardGenerator boardGenerator, System.Action<GameModel> onGameStarted);
 }
