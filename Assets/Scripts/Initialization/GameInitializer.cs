@@ -17,7 +17,6 @@ public class GameInitializer : MonoBehaviour
     private DictionaryController dictionaryController;
     private GameController gameController;
     private BoardController boardController;
-    private MatchmakingController matchmakingController;
     private GameMode mode = GameMode.PvA;
 
 
@@ -72,24 +71,19 @@ public class GameInitializer : MonoBehaviour
         dictionaryController = gameObject.AddComponent<DictionaryController>();
         dictionaryController.Initialize(dictionaryConfig);
 
-        // Initialize Matchmaking
-        matchmakingController = gameObject.AddComponent<MatchmakingController>();
-        matchmakingController.Initialize(firebaseController, gameConfig);
-
         // Initialize Game
         gameController = gameObject.AddComponent<GameController>();
         boardController = gameObject.AddComponent<BoardController>();
 
         // Create GameMode and GameModel before initializing controllers
-        IGameMode gameMode = CreateGameMode(GameModeManager.Instance.SelectedGameMode, firebaseController);
-        //GameModel gameModel = gameMode.InitializeGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator);
-
+        IGameMode gameMode = CreateGameMode(GameModeManager.Instance.SelectedGameMode);
+        
         
         gameMode.InitializeGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator , 
             (GameModel gameModel) => {
             // Este callback se ejecuta cuando el juego está listo
             // Initialize controllers after creating GameModel
-            gameController.Initialize(firebaseController, dictionaryController, inputManager, matchmakingController, gameConfig, boardConfig, gameModel, boardController, gameView, gameMode);
+            gameController.Initialize(firebaseController, dictionaryController, inputManager, gameConfig, boardConfig, gameModel, boardController, gameView, gameMode);
         });
 
         
@@ -124,45 +118,21 @@ public class GameInitializer : MonoBehaviour
 #endif
     }
 
-    private void InitializeGame()
-    {
-        // If PvP, start matchmaking
-        if (GameModeManager.Instance.SelectedGameMode == GameMode.PvP)
-        {
-            matchmakingController.FindMatch();
-        }
-    }
-
-    private IGameMode CreateGameMode(GameMode gameMode, IBackendService backendService)
+    
+    private IGameMode CreateGameMode(GameMode gameMode)
     {
         string playerId = string.Empty;
 
         switch (gameMode)
         {
             case GameMode.PvP:
-                // Assuming you have a way to get the opponent ID, e.g., from matchmaking
-                playerId = GetPlayerId(); // Implement this to get the current player's ID
-                string opponentId = GetOpponentId(); // Implement this to get the opponent's ID
                 return new PvPGameMode();
             case GameMode.PvA:
-                playerId = GetPlayerId();
                 return new PvAlgorithmGameMode();
             default:
                 throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
         }
     }
 
-    private string GetPlayerId()
-    {
-        // Return a unique identifier for the player
-        // This could be a Firebase User ID, PlayerPrefs value, or any other unique identifier
-        return SystemInfo.deviceUniqueIdentifier; // Example using the device's unique identifier
-    }
 
-    private string GetOpponentId()
-    {
-        // If you have a matchmaking system, this is where you would retrieve the opponent's ID
-        // For this example, we'll return a placeholder
-        return "opponent-placeholder-id";
-    }
 }

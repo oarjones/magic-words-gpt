@@ -51,12 +51,5 @@ public class PvAlgorithmGameMode : IGameMode
     {
         return boardGenerator.GenerateBoard(boardConfig.mapSize, GameMode.PvA);
     }
-
-    private CellView GetInitialCellForPlayer(Board board, BoardConfig boardConfig, bool isPlayer1)
-    {
-        //TODO: implement logic to get the initial cell for the player
-        return board.cells.First();
-    }
-
-    
+        
 }

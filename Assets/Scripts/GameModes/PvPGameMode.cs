@@ -126,9 +126,6 @@ public class PvPGameMode : IGameMode
 
     }
 
-
-    
-
     public void HandleGameAdded(object sender, ChildChangedEventArgs args)
     {
         if (args.DatabaseError != null)
@@ -251,7 +248,6 @@ public class PvPGameMode : IGameMode
 
     }
 
-
     void HandleOpnnentLoadGameboard(object sender, ValueChangedEventArgs args)
     {
         if (args.DatabaseError != null)
@@ -335,7 +331,6 @@ public class PvPGameMode : IGameMode
 
 
     }
-
 
     private Board CreateBoard(BoardConfig boardConfig)
     {

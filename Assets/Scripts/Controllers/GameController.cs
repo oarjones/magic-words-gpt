@@ -14,20 +14,18 @@ public class GameController : MonoBehaviour
     private IBackendService backendService;
     private IDictionaryService dictionaryService;
     private InputManager inputManager;
-    private MatchmakingController matchmakingController;
     private BoardGenerator boardGenerator;
     private BoardController boardController;
 
     private GameStatus currentState = GameStatus.Pending;
 
     public void Initialize(IBackendService backendService, IDictionaryService dictionaryService,
-        InputManager inputManager, MatchmakingController matchmakingController, GameConfig gameConfig, BoardConfig boardConfig,
+        InputManager inputManager, GameConfig gameConfig, BoardConfig boardConfig,
         GameModel gameModel, BoardController boardController, GameObject gameView, IGameMode gameMode)
     {
         this.backendService = backendService;
         this.dictionaryService = dictionaryService;
         this.inputManager = inputManager;
-        this.matchmakingController = matchmakingController;
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
         this.gameModel = gameModel;
