@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Assets.Scripts.Data
@@ -10,14 +11,15 @@ namespace Assets.Scripts.Data
     /// <summary>
     /// Estructura de celdas vecinas para celdas hexagonales
     /// </summary>
+    [System.Serializable]
     public struct AdjacentCell
     {
-        public Cell neighbor_TOP;
-        public Cell neighbor_BOTTOM;
-        public Cell neighbor_LEFTUP;
-        public Cell neighbor_LEFTDOWN;
-        public Cell neighbor_RIGHTUP;
-        public Cell neighbor_RIGHTDOWN;
+        [SerializeField] public Cell neighbor_TOP;        
+        [SerializeField] public Cell neighbor_BOTTOM;        
+        [SerializeField] public Cell neighbor_LEFTUP;
+        [SerializeField] public Cell neighbor_LEFTDOWN;
+        [SerializeField] public Cell neighbor_RIGHTUP;
+        [SerializeField] public Cell neighbor_RIGHTDOWN;
 
         public System.Collections.Generic.List<Cell> ToList()
         {

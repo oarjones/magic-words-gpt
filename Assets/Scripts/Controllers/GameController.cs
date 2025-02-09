@@ -37,20 +37,20 @@ public class GameController : MonoBehaviour
 
         // Initialize the board through BoardController
         boardController.Initialize(inputManager, gameModel);
-        this.gameView.InitializeBoard(gameModel.board); // Now GameModel is available for the View
-        this.gameView.UpdateTimer(gameModel.remainingTime);
+        this.gameView.InitializeBoard(gameModel.data.gameBoard); // Now GameModel is available for the View
+        //this.gameView.UpdateTimer(gameModel.remainingTime);
 
         UpdateGameState(GameStatus.Loading);
     }
     private IEnumerator InitializeGame()
     {
         // Set the game state to Playing after initialization
-        gameModel.gameState = GameStatus.Playing;
+        gameModel.data.status = GameStatus.Playing;
 
         // Start listening for game updates if in PvP mode
         if (gameConfig.selectedGameMode == GameMode.PvP)
         {
-            backendService.ListenForGameUpdates(gameModel.gameSessionId, OnGameUpdated, OnError);
+            backendService.ListenForGameUpdates(gameModel.gameId, OnGameUpdated, OnError);
         }
 
         yield return null;
@@ -111,17 +111,17 @@ public class GameController : MonoBehaviour
         gameModel = updatedGameModel;
 
         // Update the view based on the new game state
-        gameView.UpdateScore(gameModel.player1.id, gameModel.player1.score);
-        gameView.UpdateScore(gameModel.player2.id, gameModel.player2.score);
-        gameView.UpdateWord(gameModel.player1.id, gameModel.player1.currentWord);
-        gameView.UpdateWord(gameModel.player2.id, gameModel.player2.currentWord);
-        gameView.UpdateTimer(gameModel.remainingTime);
+        //gameView.UpdateScore(gameModel.player1.id, gameModel.player1.score);
+        //gameView.UpdateScore(gameModel.player2.id, gameModel.player2.score);
+        //gameView.UpdateWord(gameModel.player1.id, gameModel.player1.currentWord);
+        //gameView.UpdateWord(gameModel.player2.id, gameModel.player2.currentWord);
+        //gameView.UpdateTimer(gameModel.remainingTime);
 
-        // Check if the game has ended
-        if (gameModel.gameState == GameStatus.GameOver)
-        {
-            gameView.ShowGameEndScreen(gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id);
-        }
+        //// Check if the game has ended
+        //if (gameModel.gameState == GameStatus.GameOver)
+        //{
+        //    gameView.ShowGameEndScreen(gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id);
+        //}
     }
 
     private void OnError(string errorMessage)
@@ -132,28 +132,28 @@ public class GameController : MonoBehaviour
 
     private void Update()
     {
-        if (gameModel.gameState == GameStatus.Playing)
-        {
-            gameModel.remainingTime -= Time.deltaTime;
-            gameView.UpdateTimer(gameModel.remainingTime);
+        //if (gameModel.gameState == GameStatus.Playing)
+        //{
+        //    gameModel.remainingTime -= Time.deltaTime;
+        //    gameView.UpdateTimer(gameModel.remainingTime);
 
-            if (gameModel.remainingTime <= 0f)
-            {
-                gameModel.gameState = GameStatus.GameOver;
-                // Determine the winner based on score
-                string winnerId = gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id;
-                if (gameModel.player1.score == gameModel.player2.score)
-                {
-                    winnerId = null; // It's a tie
-                }
-                gameView.ShowGameEndScreen(winnerId);
-            }
-        }
+        //    if (gameModel.remainingTime <= 0f)
+        //    {
+        //        gameModel.gameState = GameStatus.GameOver;
+        //        // Determine the winner based on score
+        //        string winnerId = gameModel.player1.score > gameModel.player2.score ? gameModel.player1.id : gameModel.player2.id;
+        //        if (gameModel.player1.score == gameModel.player2.score)
+        //        {
+        //            winnerId = null; // It's a tie
+        //        }
+        //        gameView.ShowGameEndScreen(winnerId);
+        //    }
+        //}
     }
 
     public void ValidateWord(string playerId)
     {
-        Player player = playerId == gameModel.player1.id ? gameModel.player1 : gameModel.player2;
+        
         string languageCode = "es-ES"; // Example language code, should be configurable
 
         //if (dictionaryService.IsValidWord(player.currentWord, languageCode))
@@ -203,7 +203,7 @@ public class GameController : MonoBehaviour
         // Determine the current player based on some logic
         // In a non-turn-based system, we could just check which player is making the selection
         // Assuming we have a way to identify the current player (e.g., from input)
-        Player currentPlayer = DetermineCurrentPlayer();
+        //Player currentPlayer = DetermineCurrentPlayer();
 
         // Check if the selected cell is adjacent to the current cell and not occupied
         //if (currentPlayer.currentCell != null &&
@@ -231,10 +231,10 @@ public class GameController : MonoBehaviour
         //}
     }
 
-    private Player DetermineCurrentPlayer()
-    {
-        // Simple logic to get the player corresponding to the input
-        // This needs to be adapted to however you determine the current player
-        return gameModel.player1; // Or gameModel.player2 based on input or other logic
-    }
+    //private Player DetermineCurrentPlayer()
+    //{
+    //    // Simple logic to get the player corresponding to the input
+    //    // This needs to be adapted to however you determine the current player
+    //    return gameModel.player1; // Or gameModel.player2 based on input or other logic
+    //}
 }

@@ -218,35 +218,7 @@ public class BoardGenerator : MonoBehaviour
 
     }
 
-    public Board GenerateBoard(GameBoard pvpGaneBoard, GameMode selectedGameMode)
-    {
-
-        List<CellModel> AllCells = new List<CellModel>();
-
-        foreach(var tile in pvpGaneBoard.boardTiles)
-        {
-            var posVector = new Vector3(tile.posVector.x, tile.posVector.y, tile.posVector.z);
-            var cell = new Cell(tile.level, tile.tileNumber, tile.name, posVector);
-            // Lo agregamos a la lista
-            AllCells.Add(new CellModel(cell));
-        }
-
-        if (AllCells.Count > 0)
-        {
-            AssignTileNeighbors(AllCells);
-        }
-
-        List<CellView> cellViews = new List<CellView>(); // To associate Cell data with CellView instances
-        foreach (var cell in AllCells)
-        {
-            CellView cellView = boardConfig.cellPrefab.GetComponent<CellView>();
-            cellView.Initialize(cell, boardConfig.cellPrefab, boardParent);
-            cellViews.Add(cellView);
-        }
-
-        return new Board(cellViews);
-
-    }
+    
 
 
     /// <summary>

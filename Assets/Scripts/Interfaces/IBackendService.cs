@@ -1,8 +1,6 @@
 public interface IBackendService
 {
     void Authenticate(System.Action<bool> callback);
-    void UpdatePlayer(Player player, System.Action<bool> callback);
-    void GetPlayerData(string playerId, System.Action<Player> callback);
     // ... other backend operations
     void FindOpponent(GameMode gameMode, System.Action<string> onOpponentFound, System.Action<string> onError);
     void CancelMatchmaking();

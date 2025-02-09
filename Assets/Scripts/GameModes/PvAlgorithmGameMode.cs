@@ -1,6 +1,8 @@
+using Assets.Scripts.Enums;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Models;
 using Firebase.Auth;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -18,15 +20,28 @@ public class PvAlgorithmGameMode : IGameMode
 
         // Create a new board with the specified configuration
         Board board = CreateBoard(boardConfig);
-
-        // Initialize player
-        Player player = new Player(user.UserId, user.DisplayName, GetInitialCellForPlayer(board, boardConfig, true));
-
-        // Initialize algorithm as a player
-        Player opponent = new Player("algorithm", "Algorithm", GetInitialCellForPlayer(board, boardConfig, false));
+        
 
         // Create and return a new GameModel
-        var gameModel = new GameModel(board, player, opponent, gameConfig);
+        var gameModel = new GameModel();
+        gameModel.gameId = Guid.NewGuid().ToString();
+        gameModel.data = new GameData();
+        gameModel.data.gameBoard = board;
+        gameModel.data.playersInfo = new System.Collections.Generic.Dictionary<string, GamePlayerData>
+        {
+            { user.UserId, new GamePlayerData { userName = user.DisplayName, level = 1, master = true, gameBoardLoaded = true } }
+        };
+
+        gameModel.data.playersInfo = new System.Collections.Generic.Dictionary<string, GamePlayerData>
+        {
+            { Guid.NewGuid().ToString(), new GamePlayerData { userName = "Superalgorithm", level = 1, master = false, gameBoardLoaded = true } }
+        };
+        gameModel.data.type = GameType.CatchLetter;
+        gameModel.data.status = GameStatus.GameBoardCompleted;
+        gameModel.data.langCode = "es";
+        gameModel.data.createdAt = DateTime.Now.Ticks;
+        
+
 
         onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
         

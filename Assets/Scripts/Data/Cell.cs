@@ -1,22 +1,32 @@
 using Assets.Scripts.Data;
 using Assets.Scripts.Enums;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
+[Serializable]
 public class Cell
 {
     // Posición de la celda (por si fuera útil)
-    public int Row { get; protected set; }
-    public int Col { get; protected set; }
+    public int Row;
+    public int Col ;
 
+    [SerializeField]
+    public int Level;
 
-    public int Level { get; protected set; }
-    public int TileNumber { get; protected set; }
-    public string Name { get; protected set; }
+    [SerializeField]
+    public int TileNumber;
 
+    [SerializeField]
+    public string Name;
+
+    [SerializeField]
     // El estado combinable (bloqueado, oculto, congelado, seleccionado, etc.)
-    public CellState State { get; protected set; } = CellState.None;
+    public GameTileState State = GameTileState.Unselected;
+
+    [SerializeField]
+    public bool isObjectiveTile = false;
+
 
     /// <summary>
     /// Identifica quién es el "dueño" actual de la celda.
@@ -24,10 +34,13 @@ public class Cell
     /// - En modo online, será el UID de Firebase.
     /// Si está vacío (""), no hay dueño.
     /// </summary>
-    public string OwnerId { get; protected set; } = string.Empty;
+    [SerializeField]
+    public string OwnerId = string.Empty;
+
 
     // Letra que muestra la celda
-    public string CurrentLetter { get; protected set; } = string.Empty;
+    [SerializeField]
+    public string CurrentLetter = string.Empty;
 
     // Control de tiempo (si la celda usa contador)
     public bool UseTimeCounter { get; protected set; }
@@ -38,6 +51,7 @@ public class Cell
     /// Celdas adyacentes
     /// </summary>
     [HideInInspector]
+    [SerializeField]
     public AdjacentCell AdjacentCells;
 
     public Cell(int level, int tileNumber, string name, Vector3 position)
@@ -50,9 +64,14 @@ public class Cell
         Y = position.y;
     }
 
-    public float X { get; protected set; }
-    public float Y { get; protected set; }
-    public Vector3 Position { get; protected set; }
+    [SerializeField]
+    public float X;
+
+    [SerializeField]
+    public float Y;
+
+    [SerializeField]
+    public Vector3 Position;
 
     public void SetPosition(float x, float y)
     {
@@ -60,7 +79,7 @@ public class Cell
     }
     public void Initialize()
     {
-        State = CellState.None;
+        State = GameTileState.Unselected;
         OwnerId = string.Empty;
         CurrentLetter = string.Empty;
         UseTimeCounter = false;

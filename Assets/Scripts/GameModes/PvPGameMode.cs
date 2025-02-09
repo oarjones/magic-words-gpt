@@ -25,18 +25,18 @@ public class PvPGameMode : IGameMode
     private BoardGenerator boardGenerator;
     //private FirebaseUser user;
     public User userData = null;
-    public static Game GameData { get; set; }
+    
     System.Action<GameModel> onGameStarted;
     BoardConfig boardConfig;
     GameConfig gameConfig;
-    GameBoard gameBoardPvP = new GameBoard();
     GameModel gameModel = default(GameModel);
 
-    public async void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
+    public void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
         IDictionaryService dictionaryService, BoardGenerator boardGenerator, System.Action<GameModel> onGameStarted)
     {
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
+
         this.onGameStarted = onGameStarted;
         GetUserData();
         addToGameWaitRoom(FirebaseInitializer.auth.CurrentUser);
@@ -147,50 +147,19 @@ public class PvPGameMode : IGameMode
             //Si el juego me incluye como player...
             if (gameData != null && gameData.playersInfo.Where(d => d.Key == FirebaseInitializer.auth.CurrentUser.UserId).Any())
             {
-                GameData = new Game();
-                GameData.gameId = args.Snapshot.Key;
-                GameData.data = gameData;
+                gameModel = new GameModel();
+                gameModel.gameId = args.Snapshot.Key;
+                gameModel.data = gameData;
 
                 GamePlayerData playerInfo = gameData.playersInfo.Where(d => d.Key == FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault().Value;
-
-                var otherPlayerId = GameData.data.playersInfo.Where(d => d.Key != FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault().Key;
+                GamePlayerData opponentInfo = gameData.playersInfo.Where(d => d.Key != FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault().Value;
 
                 //Si es el jugador MASTER, se encargará de generar y guardar el tablero
                 if (playerInfo != null && playerInfo.master)
                 {
 
                     Board board = CreateBoard(boardConfig);
-
-                    // Initialize player
-                    Player player = new Player(FirebaseInitializer.auth.CurrentUser.UserId, FirebaseInitializer.auth.CurrentUser.DisplayName, null);
-
-                    // Initialize algorithm as a player
-                    Player opponent = new Player(otherPlayerId, "", null);
-
-                    // Create and return a new GameModel
-                    gameModel = new GameModel(board, player, opponent, gameConfig);
-
-                    gameBoardPvP = new GameBoard();
-                    gameBoardPvP.gameId = GameData.gameId;
-                    gameBoardPvP.boardTiles = new List<BoardTile>();
-
-                    foreach(var cell in board.cells.Select(c => c.cellModel))
-                    {
-                        gameBoardPvP.boardTiles.Add(new BoardTile()
-                        {
-                            posVector = new PosVector() { x = cell.Position.x, y = cell.Position.y, z = cell.Position.z },
-                            name = cell.Name,
-                            level = cell.Level,
-                            tileNumber = cell.TileNumber,
-                            x = cell.X,
-                            y = cell.Y,
-                            isObjectiveTile = false,
-                            ownerId = cell.OwnerId,
-                            letter = cell.CurrentLetter,
-                            action = Assets.Scripts.Enums.TileAction.None,
-                            tileState = Assets.Scripts.Enums.GameTileState.Unselected
-                        });
-                    }
+                    gameModel.data.gameBoard = board;                    
 
                     ////TODO: Añadir palabras iniciales a los 2 jugadores
                     /*
@@ -252,17 +221,15 @@ public class PvPGameMode : IGameMode
                     */
 
 
-                    GameData.data.gameBoard = gameBoardPvP;
-
-                    string jsonGameBoard = Newtonsoft.Json.JsonConvert.SerializeObject(gameBoardPvP);
-                    FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}/gameBoard").SetRawJsonValueAsync(jsonGameBoard).ContinueWithOnMainThread(task =>
+                    string jsonGameBoard = Newtonsoft.Json.JsonConvert.SerializeObject(board);
+                    FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard").SetRawJsonValueAsync(jsonGameBoard).ContinueWithOnMainThread(task =>
                     {
 
                         var gamesRef = FirebaseInitializer.dbRef.GetReference("games");
                         gamesRef.ChildAdded -= HandleGameAdded;
 
                         //TODO:Debermnos quedar a la espera de que el jugador esclavo cargue el tablero
-                        gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}/gameBoard");
+                        gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
                         
                         gamesRef.ValueChanged += HandleOpnnentLoadGameboard;
                     });
@@ -270,7 +237,7 @@ public class PvPGameMode : IGameMode
                 //Si es el player SLAVE, esperará a que se genere el tablero 
                 else
                 {
-                    var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}/gameBoard");
+                    var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
                     gamesRef.ValueChanged += HandleGameBoardAdded;
                 }
 
@@ -296,20 +263,20 @@ public class PvPGameMode : IGameMode
 
         try
         {
-            var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<GameBoard>(jsonGameBoard);
+            var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<Board>(jsonGameBoard);
             var gameId = args.Snapshot.Reference.Parent.Key;
-            if (gameBoard != null && GameData.gameId == gameId )
+            if (gameBoard != null && gameModel.gameId == gameId )
             {
                 
                 //Cambiamos el status a GameBoardCompleted
-                FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}").GetValueAsync().ContinueWithOnMainThread(task =>
+                FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}").GetValueAsync().ContinueWithOnMainThread(task =>
                 {
                     var gameJson = task.Result.GetRawJsonValue();
-                    var game = JsonConvert.DeserializeObject<Game>(gameJson);
+                    var game = JsonConvert.DeserializeObject<GameModel>(gameJson);
                     if(game.data.status == GameStatus.GameBoardCompleted)
                     {
                         //Eliminamos el trigger
-                        var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}/gameBoard");
+                        var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
                         gamesRef.ValueChanged -= HandleOpnnentLoadGameboard;
 
                         onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
@@ -338,34 +305,20 @@ public class PvPGameMode : IGameMode
 
         try
         {
-            var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<GameBoard>(jsonGameBoard);
+            var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<Board>(jsonGameBoard);
 
             var gameId = args.Snapshot.Reference.Parent.Key;
 
-            if (gameBoard != null && GameData.gameId == gameId)
+            if (gameBoard != null && gameModel.gameId == gameId)
             {
-                GameData.data.gameBoard = gameBoard;
-                gameBoardPvP = gameBoard;
+                gameModel.data.gameBoard = gameBoard;
 
                 //Cambiamos el status a GameBoardCompleted
-                FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}/status").SetValueAsync((int)GameStatus.GameBoardCompleted).ContinueWithOnMainThread(task =>
+                FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/status").SetValueAsync((int)GameStatus.GameBoardCompleted).ContinueWithOnMainThread(task =>
                 {
                     //Eliminamos el trigger
-                    var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{GameData.gameId}/gameBoard");
+                    var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
                     gamesRef.ValueChanged -= HandleGameBoardAdded;
-
-                    var otherPlayerId = GameData.data.playersInfo.Where(d => d.Key != FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault().Key;
-
-                    // Initialize player
-                    Player player = new Player(FirebaseInitializer.auth.CurrentUser.UserId, FirebaseInitializer.auth.CurrentUser.DisplayName, null);
-
-                    // Initialize algorithm as a player
-                    Player opponent = new Player(otherPlayerId, "", null);
-
-                    Board board = boardGenerator.GenerateBoard(gameBoardPvP, gameConfig.selectedGameMode);
-
-                    // Create and return a new GameModel
-                    gameModel = new GameModel(board, player, opponent, gameConfig);
 
                     onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
 

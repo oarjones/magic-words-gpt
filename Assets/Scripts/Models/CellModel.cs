@@ -8,6 +8,7 @@ using Unity.VisualScripting;
 
 namespace Assets.Scripts.Models
 {
+    [Serializable]
     public class CellModel : Cell
     {
         public CellModel(Cell cell) : base(cell.Level, cell.TileNumber, cell.Name, cell.Position)
@@ -68,31 +69,31 @@ namespace Assets.Scripts.Models
 
         #region State Management (Flags)
 
-        public void AddState(CellState stateToAdd)
-        {
-            State |= stateToAdd;
-            // EventBus.RaiseCellStateChanged(this); // si deseas dispararlo inmediatamente
-        }
+        //public void AddState(GameTileState stateToAdd)
+        //{
+        //    State |= stateToAdd;
+        //    // EventBus.RaiseCellStateChanged(this); // si deseas dispararlo inmediatamente
+        //}
 
-        public void RemoveState(CellState stateToRemove)
-        {
-            State &= ~stateToRemove;
-            // EventBus.RaiseCellStateChanged(this);
-        }
+        //public void RemoveState(GameTileState stateToRemove)
+        //{
+        //    State &= ~stateToRemove;
+        //    // EventBus.RaiseCellStateChanged(this);
+        //}
 
-        public bool HasState(CellState stateToCheck)
-        {
-            return State.HasFlag(stateToCheck);
-        }
+        //public bool HasState(CellState stateToCheck)
+        //{
+        //    return State.HasFlag(stateToCheck);
+        //}
 
-        /// <summary>
-        /// Reemplaza por completo el estado, si fuera necesario.
-        /// </summary>
-        public void SetExactState(CellState newState)
-        {
-            State = newState;
-            // EventBus.RaiseCellStateChanged(this);
-        }
+        ///// <summary>
+        ///// Reemplaza por completo el estado, si fuera necesario.
+        ///// </summary>
+        //public void SetExactState(CellState newState)
+        //{
+        //    State = newState;
+        //    // EventBus.RaiseCellStateChanged(this);
+        //}
 
         #endregion
 
@@ -142,21 +143,23 @@ namespace Assets.Scripts.Models
         /// </summary>
         public bool CanSelectByPlayer(string localPlayerId)
         {
-            // 1) No puede estar bloqueada, oculta o congelada
-            if (HasState(CellState.Blocked) || HasState(CellState.Hidden) || HasState(CellState.Frozen))
-                return false;
+            return false;
 
-            // 2) Si ya pertenece a otro (distinto del local), no se puede seleccionar
-            if (IsOwnedBySomeoneElse(localPlayerId))
-                return false;
+            //// 1) No puede estar bloqueada, oculta o congelada
+            //if (HasState(CellState.Blocked) || HasState(CellState.Hidden) || HasState(CellState.Frozen))
+            //    return false;
 
-            // 3) Si ya es del jugador local, la lógica depende de tu mecánica:
-            //    Por ejemplo, sólo permitir re-seleccionarla si es la última en la cadena.
-            if (IsOwnedByPlayer(localPlayerId) && !HasState(CellState.LastInWordChain))
-                return false;
+            //// 2) Si ya pertenece a otro (distinto del local), no se puede seleccionar
+            //if (IsOwnedBySomeoneElse(localPlayerId))
+            //    return false;
 
-            // Si nada impide, se puede seleccionar
-            return true;
+            //// 3) Si ya es del jugador local, la lógica depende de tu mecánica:
+            ////    Por ejemplo, sólo permitir re-seleccionarla si es la última en la cadena.
+            //if (IsOwnedByPlayer(localPlayerId) && !HasState(CellState.LastInWordChain))
+            //    return false;
+
+            //// Si nada impide, se puede seleccionar
+            //return true;
         }
 
         /// <summary>
@@ -164,11 +167,11 @@ namespace Assets.Scripts.Models
         /// </summary>
         public void SelectByPlayer(string localPlayerId, bool isLastInChain)
         {
-            SetOwnerId(localPlayerId);
-            AddState(CellState.Selected);
+            //SetOwnerId(localPlayerId);
+            //AddState(CellState.Selected);
 
-            if (isLastInChain) AddState(CellState.LastInWordChain);
-            else RemoveState(CellState.LastInWordChain);
+            //if (isLastInChain) AddState(CellState.LastInWordChain);
+            //else RemoveState(CellState.LastInWordChain);
 
             // Aquí podrías invocar tu evento global si quieres
             // EventBus.RaiseCellStateChanged(this);
@@ -179,9 +182,9 @@ namespace Assets.Scripts.Models
         /// </summary>
         public void DeselectCell()
         {
-            SetOwnerId(string.Empty);
-            RemoveState(CellState.Selected);
-            RemoveState(CellState.LastInWordChain);
+            //SetOwnerId(string.Empty);
+            //RemoveState(CellState.Selected);
+            //RemoveState(CellState.LastInWordChain);
             // EventBus.RaiseCellStateChanged(this);
         }
 

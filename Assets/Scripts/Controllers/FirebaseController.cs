@@ -16,18 +16,7 @@ public class FirebaseController : MonoBehaviour, IBackendService
         callback?.Invoke(true); // Placeholder
     }
 
-    public void UpdatePlayer(Player player, System.Action<bool> callback)
-    {
-        // Implementation for updating player data in Firebase
-        // ...
-        callback?.Invoke(true); // Placeholder
-    }
-
-    public void GetPlayerData(string playerId, System.Action<Player> callback)
-    {
-        // Implementation for getting player data from Firebase
-        // ...
-    }
+    
 
     // PvP Methods
     public void FindOpponent(GameMode gameMode, System.Action<string> onOpponentFound, System.Action<string> onError)

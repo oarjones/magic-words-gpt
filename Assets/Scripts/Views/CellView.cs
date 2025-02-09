@@ -4,10 +4,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+[Serializable]
 public class CellView : MonoBehaviour
 {
     public TextMeshProUGUI letterText;
+
+    [SerializeField]
     public CellModel cellModel;
+    
     public Sprite sprite;
 
     private GameObject view;
