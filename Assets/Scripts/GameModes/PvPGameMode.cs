@@ -18,57 +18,26 @@ using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class PvPGameMode : IGameMode
 {
-    private FirebaseDatabase databaseRef;
-    private string currentGameId;
-    private bool isMasterPlayer;
-    private IBackendService backendService;
+    //private FirebaseDatabase databaseRef;
+    //private string currentGameId;
+    //private bool isMasterPlayer;
+    //private IBackendService backendService;
     private BoardGenerator boardGenerator;
-    //private FirebaseUser user;
     public User userData = null;
+    private System.Action<GameModel> onGameStarted;
+    private BoardConfig boardConfig;
+    private GameConfig gameConfig;
+    private GameModel gameModel = default(GameModel);
     
-    System.Action<GameModel> onGameStarted;
-    BoardConfig boardConfig;
-    GameConfig gameConfig;
-    GameModel gameModel = default(GameModel);
 
     public void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
         IDictionaryService dictionaryService, BoardGenerator boardGenerator, System.Action<GameModel> onGameStarted)
     {
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
-
         this.onGameStarted = onGameStarted;
-        GetUserData();
+
         addToGameWaitRoom(FirebaseInitializer.auth.CurrentUser);
-    }
-
-
-    private void GetUserData()
-    {
-        Firebase.Auth.FirebaseAuth auth = FirebaseInitializer.auth;
-
-        if (auth.CurrentUser != null)
-        {
-            FirebaseInitializer.dbRef.RootReference.Child("users").Child(auth.CurrentUser.UserId).GetValueAsync().ContinueWithOnMainThread(task =>
-            {
-                if (task.IsCompleted)
-                {
-                    var currentUser = task.Result;
-
-                    if (currentUser != null && currentUser.Value != null)
-                    {
-                        var currentUserJson = currentUser.GetRawJsonValue();
-                        userData = JsonConvert.DeserializeObject<User>(currentUserJson);
-                    }
-                }
-                else
-                {
-                    // Manejar error
-                    Debug.LogError("Error al obtener datos de Firebase: " + task.Exception);
-                }
-            });
-
-        }
     }
 
     public void addToGameWaitRoom(Firebase.Auth.FirebaseUser user)
@@ -77,39 +46,23 @@ public class PvPGameMode : IGameMode
         {
             if (FirebaseInitializer.dbRef != null)
             {
-                PlayerWaitRoom playerWaitRoom = null;
-
-
-                FirebaseInitializer.dbRef.GetReference($"users/{user.UserId}/username").GetValueAsync().ContinueWithOnMainThread(task =>
+                PlayerWaitRoom playerWaitRoom = new PlayerWaitRoom()
                 {
-                    if (task.IsFaulted)
-                    {
-                        Debug.Log($"[addToGameWaitRoom] Error retrieving user data: {task.Exception.Message}");
-                    }
-                    else if (task.IsCompleted)
-                    {
-                        DataSnapshot snapshot = task.Result;
-
-                        playerWaitRoom = new PlayerWaitRoom()
-                        {
-                            createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                            langCode = PlayerPrefs.GetString("LANG"),
-                            level = PlayerPrefs.GetInt("LEVEL"),
-                            userName = task.Result.Value.ToString()
-                        };
+                    createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    langCode = PlayerPrefs.GetString("LANG"),
+                    level = PlayerPrefs.GetInt("LEVEL"),
+                    userName = FirebaseAuth.DefaultInstance.CurrentUser.DisplayName
+                };
 
 
-                        //Se añade una nueva entrada
-                        string jsonPlayerWaitRoom = Newtonsoft.Json.JsonConvert.SerializeObject(playerWaitRoom);
-                        FirebaseInitializer.dbRef.RootReference.Child("gameWaitRoom").Child(user.UserId).SetRawJsonValueAsync(jsonPlayerWaitRoom).ContinueWithOnMainThread(task =>
-                        {
-                            //Cuando se una otro jugador se generará automaticamente una partida
-                            var gamesRef = FirebaseInitializer.dbRef.GetReference("games");
-                            gamesRef.ChildAdded += HandleGameAdded;
+                //Se añade una nueva entrada
+                string jsonPlayerWaitRoom = Newtonsoft.Json.JsonConvert.SerializeObject(playerWaitRoom);
+                FirebaseInitializer.dbRef.RootReference.Child("gameWaitRoom").Child(user.UserId).SetRawJsonValueAsync(jsonPlayerWaitRoom).ContinueWithOnMainThread(task =>
+                {
+                    //Cuando se una otro jugador se generará automaticamente una partida
+                    var gamesRef = FirebaseInitializer.dbRef.GetReference("games");
+                    gamesRef.ChildAdded += HandleGameAdded;
 
-                        });
-
-                    }
                 });
 
             }
@@ -156,7 +109,7 @@ public class PvPGameMode : IGameMode
                 {
 
                     Board board = CreateBoard(boardConfig);
-                    gameModel.data.gameBoard = board;                    
+                    gameModel.data.gameBoard = board;
 
                     ////TODO: Añadir palabras iniciales a los 2 jugadores
                     /*
@@ -225,9 +178,8 @@ public class PvPGameMode : IGameMode
                         var gamesRef = FirebaseInitializer.dbRef.GetReference("games");
                         gamesRef.ChildAdded -= HandleGameAdded;
 
-                        //TODO:Debermnos quedar a la espera de que el jugador esclavo cargue el tablero
+                        //A la espera de que el jugador esclavo cargue el tablero
                         gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
-                        
                         gamesRef.ValueChanged += HandleOpnnentLoadGameboard;
                     });
                 }
@@ -261,15 +213,15 @@ public class PvPGameMode : IGameMode
         {
             var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<Board>(jsonGameBoard);
             var gameId = args.Snapshot.Reference.Parent.Key;
-            if (gameBoard != null && gameModel.gameId == gameId )
+            if (gameBoard != null && gameModel.gameId == gameId)
             {
-                
+
                 //Cambiamos el status a GameBoardCompleted
                 FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}").GetValueAsync().ContinueWithOnMainThread(task =>
                 {
                     var gameJson = task.Result.GetRawJsonValue();
                     var game = JsonConvert.DeserializeObject<GameModel>(gameJson);
-                    if(game.data.status == GameStatus.GameBoardCompleted)
+                    if (game.data.status == GameStatus.GameBoardCompleted)
                     {
                         //Eliminamos el trigger
                         var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
@@ -277,7 +229,7 @@ public class PvPGameMode : IGameMode
 
                         onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
                     }
-                    
+
                 });
             }
         }

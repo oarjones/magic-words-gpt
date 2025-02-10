@@ -46,8 +46,8 @@ def join_players(event: database_fn.DatabaseEvent) -> None:
                 game_id = new_game_ref.key
 
                 new_game = {
-                    "status": 2,  # "Created" (según tu lógica original)
-                    "type": 2,
+                    "status": 5,  # "PlayersJoined"
+                    "type": 1,  # "CatchLetter"
                     "langCode": first_player_data["langCode"],
                     "createdAt": datetime.datetime.now().timestamp(),
                     "playersInfo": {
@@ -113,7 +113,7 @@ def check_players_ready(event: database_fn.DatabaseEvent) -> None:
                     break
 
             if all_ready:
-                transaction.update(game_ref, {"status": 3})  # Cambia a "playing" (3)
+                transaction.update(game_ref, {"status": 5})  # Cambia a "GameBoardCompleted" (5)
                 print(f"Partida {game_id}: ¡Todos los jugadores listos!")
 
         db.reference("/").transaction(check_if_ready) #Transacción en la raíz

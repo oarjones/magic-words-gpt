@@ -4,9 +4,10 @@ public enum GameStatus
     Pending = 1,
     Loading = 2,
     WaitingForPlayers = 3,
-    GameBoardCompleted = 4,
-    PlayersReady = 5,
-    Playing = 6,
-    GameOver = 7,
-    Finished = 8
+    PlayersJoined = 4,
+    GameBoardCompleted = 5,
+    PlayersReady = 6,
+    Playing = 7,
+    GameOver = 8,
+    Finished = 9
 }

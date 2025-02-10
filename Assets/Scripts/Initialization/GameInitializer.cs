@@ -81,10 +81,13 @@ public class GameInitializer : MonoBehaviour
         
         gameMode.InitializeGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator , 
             (GameModel gameModel) => {
-            // Este callback se ejecuta cuando el juego está listo
-            // Initialize controllers after creating GameModel
-            gameController.Initialize(firebaseController, dictionaryController, inputManager, gameConfig, boardConfig, gameModel, boardController, gameView, gameMode);
-        });
+
+            // Este callback se ejecuta cuando se cargue el tablero
+            gameController.Initialize(firebaseController, dictionaryController, inputManager, gameConfig, boardConfig, 
+                gameModel, boardController, gameView, gameMode);
+
+                //TODO: Inicializa el juego
+            });
 
         
     }
