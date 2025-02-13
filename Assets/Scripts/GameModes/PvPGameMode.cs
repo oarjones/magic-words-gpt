@@ -1,293 +1,285 @@
 // PvPGameMode.cs
 using Assets.Scripts.Data;
-using Firebase.Auth;
 using Firebase.Database;
 using Firebase.Extensions;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
-using System.Threading.Tasks;
-using TMPro;
-using UnityEditor;
 using UnityEngine;
-using static Unity.VisualScripting.Icons;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class PvPGameMode : IGameMode
 {
-    //private FirebaseDatabase databaseRef;
-    //private string currentGameId;
-    //private bool isMasterPlayer;
-    //private IBackendService backendService;
     private BoardGenerator boardGenerator;
-    public User userData = null;
-    private System.Action<GameModel> onGameStarted;
     private BoardConfig boardConfig;
     private GameConfig gameConfig;
     private GameModel gameModel = default(GameModel);
-    
+    private DatabaseReference gamesRef;
+    private bool isGameAddedSubscribed = false;
 
-    public void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
-        IDictionaryService dictionaryService, BoardGenerator boardGenerator, System.Action<GameModel> onGameStarted)
+
+
+    public void Initialize(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
+        IDictionaryService dictionaryService, BoardGenerator boardGenerator)
     {
+        this.boardGenerator = boardGenerator;
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
-        this.onGameStarted = onGameStarted;
-
-        addToGameWaitRoom(FirebaseInitializer.auth.CurrentUser);
     }
 
-    public void addToGameWaitRoom(Firebase.Auth.FirebaseUser user)
+
+    /// <summary>
+    /// Fase 1: Emparejamiento. Se registra al jugador en Firebase y se espera la aparición de un oponente.
+    /// Cuando se detecta un juego en el que participa el jugador, se invoca el callback onOpponentFound.
+    /// </summary>
+    public void StartWaitingForOpponent(Action onOpponentFound)
     {
         try
         {
-            if (FirebaseInitializer.dbRef != null)
+            // Validación de Firebase
+            if (FirebaseInitializer.auth?.CurrentUser == null)
             {
-                PlayerWaitRoom playerWaitRoom = new PlayerWaitRoom()
+                Debug.LogError("FirebaseInitializer.auth.CurrentUser es nulo. No se puede emparejar.");
+                return;
+            }
+            // Registrar al jugador en la sala de espera
+            PlayerWaitRoom playerWaitRoom = new PlayerWaitRoom()
+            {
+                createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                langCode = PlayerPrefs.GetString("LANG"),
+                level = PlayerPrefs.GetInt("LEVEL"),
+                userName = "", // Se puede modificar para incluir el username
+                status = "waiting"
+            };
+
+            string jsonPlayerWaitRoom = JsonConvert.SerializeObject(playerWaitRoom);
+            FirebaseInitializer.dbRef.RootReference.Child("gameWaitRoom")
+                .Child(FirebaseInitializer.auth.CurrentUser.UserId)
+                .SetRawJsonValueAsync(jsonPlayerWaitRoom)
+                .ContinueWithOnMainThread(task =>
                 {
-                    createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                    langCode = PlayerPrefs.GetString("LANG"),
-                    level = PlayerPrefs.GetInt("LEVEL"),
-                    userName = FirebaseAuth.DefaultInstance.CurrentUser.DisplayName
-                };
+                    if (task.IsFaulted)
+                    {
+                        Debug.LogError($"Error al agregar a la sala de espera: {task.Exception}");
+                        return;
+                    }
+                    // Suscribir a la detección de la creación de juegos
+                    gamesRef = FirebaseInitializer.dbRef.GetReference("games");
+                    if (!isGameAddedSubscribed)
+                    {
+                        gamesRef.ChildAdded += (sender, args) =>
+                        {
+                            if (args.DatabaseError != null)
+                            {
+                                Debug.LogError($"Firebase error en StartWaitingForOpponent: {args.DatabaseError.Message}");
+                                return;
+                            }
+                            // Se verifica que el juego incluye al jugador actual
+                            var jsonGame = args.Snapshot.GetRawJsonValue();
+                            if (string.IsNullOrEmpty(jsonGame))
+                                return;
 
-
-                //Se añade una nueva entrada
-                string jsonPlayerWaitRoom = Newtonsoft.Json.JsonConvert.SerializeObject(playerWaitRoom);
-                FirebaseInitializer.dbRef.RootReference.Child("gameWaitRoom").Child(user.UserId).SetRawJsonValueAsync(jsonPlayerWaitRoom).ContinueWithOnMainThread(task =>
-                {
-                    //Cuando se una otro jugador se generará automaticamente una partida
-                    var gamesRef = FirebaseInitializer.dbRef.GetReference("games");
-                    gamesRef.ChildAdded += HandleGameAdded;
-
+                            GameData gameData = JsonConvert.DeserializeObject<GameData>(jsonGame);
+                            if (gameData != null && gameData.playersInfo != null &&
+                                gameData.playersInfo.ContainsKey(FirebaseInitializer.auth.CurrentUser.UserId))
+                            {
+                                // Se crea el GameModel a partir del snapshot
+                                gameModel = new GameModel
+                                {
+                                    gameId = args.Snapshot.Key,
+                                    data = gameData
+                                };
+                                // Se invoca el callback para notificar que se ha emparejado
+                                onOpponentFound?.Invoke();
+                            }
+                        };
+                        isGameAddedSubscribed = true;
+                    }
                 });
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Excepción en StartWaitingForOpponent: {ex.Message}");
+        }
+    }
 
+    /// <summary>
+    /// Fase 2: Generación del tablero.
+    /// Si el jugador es MASTER, se genera el tablero y se sube a Firebase.
+    /// Se invoca el callback onBoardGenerated con el GameModel actualizado.
+    /// </summary>
+    public void GenerateBoard(Action<GameModel> onBoardGenerated)
+    {
+        try
+        {
+            // Guardar configuraciones locales
+            // Se asume que gameConfig, boardConfig y boardGenerator ya han sido asignados externamente
+            if (gameConfig == null || boardConfig == null)
+            {
+                Debug.LogError("gameConfig o boardConfig son nulos en GenerateBoard.");
+                return;
+            }
+
+            // Se determina si el jugador es MASTER
+            GamePlayerData playerInfo = gameModel.data.playersInfo[FirebaseInitializer.auth.CurrentUser.UserId];
+            if (playerInfo.master)
+            {
+                // Generar el tablero y actualizar el GameModel
+                Board board = boardGenerator.GenerateBoard(boardConfig.mapSize, GameMode.PvP);
+                gameModel.data.gameBoard = board;
+
+                // Se pueden invocar métodos stub para asignar la celda y palabra inicial
+                AssignInitialCellToPlayer(FirebaseInitializer.auth.CurrentUser.UserId, board);
+                AssignInitialWordToPlayer(FirebaseInitializer.auth.CurrentUser.UserId, board);
+
+                // Subir el tablero a Firebase
+                string jsonGameBoard = JsonConvert.SerializeObject(board);
+                FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard")
+                    .SetRawJsonValueAsync(jsonGameBoard)
+                    .ContinueWithOnMainThread(task =>
+                    {
+                        if (task.IsFaulted)
+                        {
+                            Debug.LogError($"Error al guardar el tablero: {task.Exception}");
+                            return;
+                        }
+                        // Se desuscribe el ChildAdded para evitar redundancias
+                        if (isGameAddedSubscribed)
+                        {
+                            gamesRef.ChildAdded -= null;
+                            isGameAddedSubscribed = false;
+                        }
+                        // Invocar callback indicando que el tablero se generó correctamente
+                        onBoardGenerated?.Invoke(gameModel);
+                    });
             }
             else
             {
-                throw new Exception("No se ha inicializado FirebaseDatabase dbRef!");
+                // Si no es MASTER, se notifica inmediatamente (o se puede esperar a la siguiente fase)
+                onBoardGenerated?.Invoke(gameModel);
             }
-
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Debug.LogError(e.Message);
+            Debug.LogError($"Excepción en GenerateBoard: {ex.Message}");
         }
-
     }
 
-    public void HandleGameAdded(object sender, ChildChangedEventArgs args)
+    /// <summary>
+    /// Fase 3: Carga y sincronización del tablero.
+    /// Se suscribe a los eventos de Firebase para detectar cuando el tablero se ha cargado para el jugador SLAVE
+    /// o cuando el MASTER detecta que el oponente ha cargado el tablero.
+    /// El callback onBoardLoaded se invoca con el GameModel actualizado.
+    /// </summary>
+    public void WaitForBoardLoad(Action<GameModel> onBoardLoaded)
     {
-        if (args.DatabaseError != null)
-        {
-            Debug.LogError(args.DatabaseError.Message);
-            return;
-        }
-
-        //var game = args.Snapshot;
-        var jsonGame = args.Snapshot.GetRawJsonValue();
-
         try
         {
-            GameData gameData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameData>(jsonGame);
+            // Se obtiene la referencia al tablero en Firebase
+            var boardRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
 
-            //Si el juego me incluye como player...
-            if (gameData != null && gameData.playersInfo.Where(d => d.Key == FirebaseInitializer.auth.CurrentUser.UserId).Any())
+            // Se decide el comportamiento según si el jugador es MASTER o SLAVE
+            GamePlayerData playerInfo = gameModel.data.playersInfo[FirebaseInitializer.auth.CurrentUser.UserId];
+            if (playerInfo.master)
             {
-                gameModel = new GameModel();
-                gameModel.gameId = args.Snapshot.Key;
-                gameModel.data = gameData;
-
-                GamePlayerData playerInfo = gameData.playersInfo.Where(d => d.Key == FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault().Value;
-                GamePlayerData opponentInfo = gameData.playersInfo.Where(d => d.Key != FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault().Value;
-
-                //Si es el jugador MASTER, se encargará de generar y guardar el tablero
-                if (playerInfo != null && playerInfo.master)
+                // Para el MASTER, se espera a que el oponente cargue el tablero y cambie el estado del juego
+                boardRef.ValueChanged += (sender, args) =>
                 {
-
-                    Board board = CreateBoard(boardConfig);
-                    gameModel.data.gameBoard = board;
-
-                    ////TODO: Añadir palabras iniciales a los 2 jugadores
-                    /*
-                    var playerInitalWord = GetRandomWord();
-                    var opponentInitalWord = GetRandomWord();
-
-                    List<BoardTile> tiles = new List<BoardTile>();
-
-                    short i = 0;
-                    BoardTile currentTile = null;
-
-                    //Player
-                    foreach (char letter in playerInitalWord.ToUpper())
+                    if (args.DatabaseError != null)
                     {
-                        if (i == 0)
-                        {
-                            currentTile = gameBoard.boardTiles.Where(c => !string.IsNullOrEmpty(c.playerInitial) && c.playerInitial == FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault(); //map.CurrentPlayerTile;
-                        }
-                        else
-                        {
-                            var neighborns = GetNeighbors(currentTile, gameBoard.boardTiles);
-
-                            var cellCount = neighborns.Where(c => c != null && !tiles.Contains(c)).Count();
-                            int randomCellIndex = UnityEngine.Random.Range(0, (cellCount - 1));
-
-                            currentTile = neighborns.Where(c => c != null && !tiles.Contains(c)).ToList()[randomCellIndex];
-
-                        }
-
-                        currentTile.letter = DictionaryUtilities.RemoveDiacritics(letter.ToString()).Trim();
-                        tiles.Add(currentTile);
-
-                        i++;
+                        Debug.LogError($"Firebase error en WaitForBoardLoad (MASTER): {args.DatabaseError.Message}");
+                        return;
                     }
+                    var jsonGameBoard = args.Snapshot.GetRawJsonValue();
+                    if (string.IsNullOrEmpty(jsonGameBoard))
+                        return;
 
-                    //Opponent
-                    i = 0;
-                    foreach (char letter in opponentInitalWord.ToUpper())
+                    // Se lee y se actualiza el tablero en el GameModel
+                    Board board = JsonConvert.DeserializeObject<Board>(jsonGameBoard);
+                    var gameId = args.Snapshot.Reference.Parent.Key;
+                    if (board != null && gameModel.gameId == gameId)
                     {
-                        if (i == 0)
-                        {
-                            currentTile = gameBoard.boardTiles.Where(c => !string.IsNullOrEmpty(c.playerInitial) && c.playerInitial != FirebaseInitializer.auth.CurrentUser.UserId).FirstOrDefault(); //map.CurrentPlayerTile;
-                        }
-                        else
-                        {
-                            var neighborns = GetNeighbors(currentTile, gameBoard.boardTiles);
-
-                            var cellCount = neighborns.Where(c => c != null && !tiles.Contains(c)).Count();
-                            int randomCellIndex = UnityEngine.Random.Range(0, (cellCount - 1));
-
-                            currentTile = neighborns.Where(c => c != null && !tiles.Contains(c)).ToList()[randomCellIndex];
-                        }
-
-                        currentTile.letter = DictionaryUtilities.RemoveDiacritics(letter.ToString()).Trim();
-                        tiles.Add(currentTile);
-
-                        i++;
+                        // Aquí se podría validar que el oponente ha cargado el tablero.
+                        // Por ejemplo, verificando el estado del juego en Firebase.
+                        FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}")
+                            .GetValueAsync().ContinueWithOnMainThread(task =>
+                            {
+                                if (task.IsFaulted)
+                                {
+                                    Debug.LogError($"Error al obtener el juego: {task.Exception}");
+                                    return;
+                                }
+                                var gameJson = task.Result.GetRawJsonValue();
+                                GameModel updatedGame = JsonConvert.DeserializeObject<GameModel>(gameJson);
+                                if (updatedGame.data.status == GameStatus.BoardLoaded)
+                                {
+                                    // Se desuscribe el evento para evitar invocaciones múltiples
+                                    boardRef.ValueChanged -= null;
+                                    onBoardLoaded?.Invoke(updatedGame);
+                                }
+                            });
                     }
-                    */
-
-
-                    string jsonGameBoard = Newtonsoft.Json.JsonConvert.SerializeObject(board);
-                    FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard").SetRawJsonValueAsync(jsonGameBoard).ContinueWithOnMainThread(task =>
-                    {
-
-                        var gamesRef = FirebaseInitializer.dbRef.GetReference("games");
-                        gamesRef.ChildAdded -= HandleGameAdded;
-
-                        //A la espera de que el jugador esclavo cargue el tablero
-                        gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
-                        gamesRef.ValueChanged += HandleOpnnentLoadGameboard;
-                    });
-                }
-                //Si es el player SLAVE, esperará a que se genere el tablero 
-                else
+                };
+            }
+            else
+            {
+                // Para el SLAVE, se espera a que el tablero se agregue y se sincronice
+                boardRef.ValueChanged += (sender, args) =>
                 {
-                    var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
-                    gamesRef.ValueChanged += HandleGameBoardAdded;
-                }
+                    if (args.DatabaseError != null)
+                    {
+                        Debug.LogError($"Firebase error en WaitForBoardLoad (SLAVE): {args.DatabaseError.Message}");
+                        return;
+                    }
+                    var jsonGameBoard = args.Snapshot.GetRawJsonValue();
+                    if (string.IsNullOrEmpty(jsonGameBoard))
+                        return;
 
+                    Board board = JsonConvert.DeserializeObject<Board>(jsonGameBoard);
+                    var gameId = args.Snapshot.Reference.Parent.Key;
+                    if (board != null && gameModel.gameId == gameId)
+                    {
+                        gameModel.data.gameBoard = board;
+                        FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/status")
+                            .SetValueAsync((int)GameStatus.BoardLoaded)
+                            .ContinueWithOnMainThread(task =>
+                            {
+                                if (task.IsFaulted)
+                                {
+                                    Debug.LogError($"Error al actualizar el status: {task.Exception}");
+                                    return;
+                                }
+                                boardRef.ValueChanged -= null;
+                                onBoardLoaded?.Invoke(gameModel);
+                            });
+                    }
+                };
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Debug.LogError(e.Message);
-            throw;
+            Debug.LogError($"Excepción en WaitForBoardLoad: {ex.Message}");
         }
-
     }
 
-    void HandleOpnnentLoadGameboard(object sender, ValueChangedEventArgs args)
+    // Stubs para asignar celda y palabra inicial (sin implementación actual)
+    private void AssignInitialCellToPlayer(string playerId, Board board)
     {
-        if (args.DatabaseError != null)
-        {
-            Debug.LogError(args.DatabaseError.Message);
-            return;
-        }
-        var jsonGameBoard = args.Snapshot.GetRawJsonValue();
-
-        try
-        {
-            var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<Board>(jsonGameBoard);
-            var gameId = args.Snapshot.Reference.Parent.Key;
-            if (gameBoard != null && gameModel.gameId == gameId)
-            {
-
-                //Cambiamos el status a GameBoardCompleted
-                FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}").GetValueAsync().ContinueWithOnMainThread(task =>
-                {
-                    var gameJson = task.Result.GetRawJsonValue();
-                    var game = JsonConvert.DeserializeObject<GameModel>(gameJson);
-                    if (game.data.status == GameStatus.GameBoardCompleted)
-                    {
-                        //Eliminamos el trigger
-                        var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
-                        gamesRef.ValueChanged -= HandleOpnnentLoadGameboard;
-
-                        onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
-                    }
-
-                });
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError(e.Message);
-            throw;
-        }
+        Debug.Log($"Asignar celda inicial para el jugador {playerId} (stub).");
     }
-
-    void HandleGameBoardAdded(object sender, ValueChangedEventArgs args)
+    private void AssignInitialWordToPlayer(string playerId, Board board)
     {
-        if (args.DatabaseError != null)
-        {
-            Debug.LogError(args.DatabaseError.Message);
-            return;
-        }
-
-
-        var jsonGameBoard = args.Snapshot.GetRawJsonValue();
-
-        try
-        {
-            var gameBoard = Newtonsoft.Json.JsonConvert.DeserializeObject<Board>(jsonGameBoard);
-
-            var gameId = args.Snapshot.Reference.Parent.Key;
-
-            if (gameBoard != null && gameModel.gameId == gameId)
-            {
-                gameModel.data.gameBoard = gameBoard;
-
-                //Cambiamos el status a GameBoardCompleted
-                FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/status").SetValueAsync((int)GameStatus.GameBoardCompleted).ContinueWithOnMainThread(task =>
-                {
-                    //Eliminamos el trigger
-                    var gamesRef = FirebaseInitializer.dbRef.GetReference($"games/{gameModel.gameId}/gameBoard");
-                    gamesRef.ValueChanged -= HandleGameBoardAdded;
-
-                    onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
-
-                });
-
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError(e.Message);
-            throw;
-        }
-
-
-
+        Debug.Log($"Asignar palabra inicial para el jugador {playerId} (stub).");
     }
 
-    private Board CreateBoard(BoardConfig boardConfig)
+    // Métodos adicionales para inyección de dependencias
+    public void SetBoardGenerator(BoardGenerator generator)
     {
-        return boardGenerator.GenerateBoard(boardConfig.mapSize, GameMode.PvP);
+        this.boardGenerator = generator;
     }
 
-
+    public void SetConfigurations(GameConfig gameConfig, BoardConfig boardConfig)
+    {
+        this.gameConfig = gameConfig;
+        this.boardConfig = boardConfig;
+    }
 }

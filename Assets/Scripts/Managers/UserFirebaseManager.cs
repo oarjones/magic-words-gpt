@@ -1,7 +1,10 @@
 using Assets.Scripts.Data;
+using Firebase.Database;
 using Firebase.Extensions;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 [Serializable]
@@ -116,7 +119,7 @@ public class UserFirebaseManager : MonoBehaviour
     //}
 
 
-    public void writeNewUser(string userId, string name, string email, int level = 1, string langCode = LanguageCodes.ES_es, int score = 0)
+    public static void writeNewUser(string userId, string name, string email, int level = 1, string langCode = LanguageCodes.ES_es, int score = 0)
     {
         try
         {
@@ -277,6 +280,19 @@ public class UserFirebaseManager : MonoBehaviour
         {
             Debug.LogError(e.Message);
         }
+    }
+
+    public async Task<User> getUser(string userId)
+    {
+        User user = default(User);
+
+        await FirebaseInitializer.dbRef.RootReference.Child("users").Child(userId).GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            var userJson = task.Result.GetRawJsonValue();
+            user = JsonConvert.DeserializeObject<User>(userJson);
+        });
+
+        return user;
     }
 
     //public void updateUsers()

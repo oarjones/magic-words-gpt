@@ -12,7 +12,7 @@ public class GameModel
 
 public class GameData
 {
-    public GameStatus status { get; set; } = GameStatus.Pending;
+    public GameStatus status { get; set; } = GameStatus.WaitingForOpponent;
     public GameType type { get; set; } = GameType.CatchLetter;
     public string langCode { get; set; }
     public double createdAt { get; set; }

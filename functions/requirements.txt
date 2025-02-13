@@ -1,0 +1,2 @@
+firebase-admin>=6.4.0,<7
+firebase-functions>=0.2.2,<1

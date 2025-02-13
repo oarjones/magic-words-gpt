@@ -5,46 +5,59 @@ using Firebase.Auth;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using UnityEngine;
 
 public class PvAlgorithmGameMode : IGameMode
 {
     private BoardGenerator boardGenerator;
-    private FirebaseUser user;
-    public void InitializeGame(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService, 
-        IDictionaryService dictionaryService, BoardGenerator boardGenerator, System.Action<GameModel> onGameStarted)
+    private BoardConfig boardConfig;
+    private GameConfig gameConfig;
+    private GameModel gameModel = new GameModel();
+
+
+    public void Initialize(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
+        IDictionaryService dictionaryService, BoardGenerator boardGenerator)
     {
-
-        user = FirebaseAuth.DefaultInstance.CurrentUser;
-
         this.boardGenerator = boardGenerator;
+        this.gameConfig = gameConfig;
+        this.boardConfig = boardConfig;
+    }
 
+    public void GenerateBoard(Action<GameModel> onBoardGenerated)
+    {
         // Create a new board with the specified configuration
         Board board = CreateBoard(boardConfig);
-        
 
-        // Create and return a new GameModel
-        var gameModel = new GameModel();
-        gameModel.gameId = Guid.NewGuid().ToString();
-        gameModel.data = new GameData();
+        
         gameModel.data.gameBoard = board;
+
+        onBoardGenerated?.Invoke(gameModel);
+    }
+
+    public void StartWaitingForOpponent(Action onOpponentFound)
+    {
         gameModel.data.playersInfo = new System.Collections.Generic.Dictionary<string, GamePlayerData>
         {
-            { user.UserId, new GamePlayerData { userName = user.DisplayName, level = 1, master = true, gameBoardLoaded = true } }
+            { Guid.NewGuid().ToString(), new GamePlayerData { userName = PlayerPrefs.GetString("username") ?? "test user", level= PlayerPrefs.GetInt("level"), master = true, gameBoardLoaded = true } }
         };
 
         gameModel.data.playersInfo = new System.Collections.Generic.Dictionary<string, GamePlayerData>
         {
             { Guid.NewGuid().ToString(), new GamePlayerData { userName = "Superalgorithm", level = 1, master = false, gameBoardLoaded = true } }
         };
+
+        onOpponentFound?.Invoke();
+    }
+
+    public void WaitForBoardLoad(Action<GameModel> onBoardLoaded)
+    {
+        gameModel.gameId = Guid.NewGuid().ToString();        
         gameModel.data.type = GameType.CatchLetter;
-        gameModel.data.status = GameStatus.GameBoardCompleted;
+        gameModel.data.status = GameStatus.BoardLoaded;
         gameModel.data.langCode = "es";
         gameModel.data.createdAt = DateTime.Now.Ticks;
-        
 
-
-        onGameStarted?.Invoke(gameModel); // Notifica que el juego está listo
-        
+        onBoardLoaded?.Invoke(gameModel);
     }
 
     private Board CreateBoard(BoardConfig boardConfig)

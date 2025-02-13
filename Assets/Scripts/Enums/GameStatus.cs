@@ -1,13 +1,11 @@
 
 public enum GameStatus
 {
-    Pending = 1,
-    Loading = 2,
-    WaitingForPlayers = 3,
-    PlayersJoined = 4,
-    GameBoardCompleted = 5,
-    PlayersReady = 6,
-    Playing = 7,
-    GameOver = 8,
-    Finished = 9
+    WaitingForOpponent,   // Lobby: Emparejamiento o espera (PvP) o preparación (PvA)
+    BoardGenerating,      // Se está generando el tablero
+    BoardLoaded,          // Ambos jugadores han recibido y validado el tablero
+    GameSetup,            // Inicialización de la vista: posicionamiento inicial, carga de UI, etc.
+    GameStart,            // Estado intermedio (ready check, cuenta regresiva)
+    Playing,              // Fase activa de juego
+    GameOver              // Finalización del juego
 }

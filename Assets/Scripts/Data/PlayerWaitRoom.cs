@@ -12,5 +12,6 @@ namespace Assets.Scripts.Data
         public int level { get; set; } = 0;
         public string langCode { get; set; } = "es-ES";
         public double createdAt { get; set; }
+        public string status { get; set; } = "waiting";
     }
 }

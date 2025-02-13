@@ -1,6 +1,7 @@
 using Assets.Scripts.Managers;
 using Firebase.Auth;
 using System;
+using System.ComponentModel.Design;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -54,6 +55,7 @@ public class GameInitializer : MonoBehaviour
         }
     }
 
+    
     private void FirebaseInitialized()
     {
         GetTestUser();
@@ -77,19 +79,15 @@ public class GameInitializer : MonoBehaviour
 
         // Create GameMode and GameModel before initializing controllers
         IGameMode gameMode = CreateGameMode(GameModeManager.Instance.SelectedGameMode);
-        
-        
-        gameMode.InitializeGame(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator , 
-            (GameModel gameModel) => {
 
-            // Este callback se ejecuta cuando se cargue el tablero
-            gameController.Initialize(firebaseController, dictionaryController, inputManager, gameConfig, boardConfig, 
-                gameModel, boardController, gameView, gameMode);
+        //Inicialización de IGameMode
+        gameMode.Initialize(gameConfig, boardConfig, firebaseController, dictionaryController, boardGenerator);
 
-                //TODO: Inicializa el juego
-            });
+        // Inicializar el GameController, quien se encargará de gestionar el flujo y llamar a IGameMode
+        gameController.Initialize(firebaseController, dictionaryController, inputManager, gameConfig, boardConfig,
+            boardController, gameView, gameMode);
 
-        
+
     }
 
     private void GetTestUser()
