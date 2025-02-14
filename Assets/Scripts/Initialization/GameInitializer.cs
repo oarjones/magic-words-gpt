@@ -10,7 +10,7 @@ public class GameInitializer : MonoBehaviour
     [SerializeField] private GameConfig gameConfig;
     [SerializeField] private BoardConfig boardConfig;
     [SerializeField] private DictionaryConfig dictionaryConfig;
-    [SerializeField] private GameObject gameView;
+    [SerializeField] private GameView gameView;
     [SerializeField] private BoardGenerator boardGenerator;
     [SerializeField] private InputManager inputManager;
 

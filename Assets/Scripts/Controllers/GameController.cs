@@ -9,7 +9,6 @@ public class GameController : MonoBehaviour
     private BoardConfig boardConfig;
     private GameView gameView;
     private IGameMode gameMode;
-    private GameModel gameModel;
     private IBackendService backendService;
     private IDictionaryService dictionaryService;
     private InputManager inputManager;
@@ -25,10 +24,14 @@ public class GameController : MonoBehaviour
     // Evento interno para notificaciones de estado (placeholder para futuro EventBus)
     public event Action<GameStatus> OnStateChanged;
 
+    // Modelo y su notificador
+    public GameModel gameModel;
+    public GameModelNotifier modelNotifier;
+
 
     public void Initialize(IBackendService backendService, IDictionaryService dictionaryService,
-    InputManager inputManager, GameConfig gameConfig, BoardConfig boardConfig, BoardController boardController, 
-    GameObject gameView, IGameMode gameMode)
+    InputManager inputManager, GameConfig gameConfig, BoardConfig boardConfig, BoardController boardController,
+    GameView gameView, IGameMode gameMode)
     {
         // Asignación de dependencias
         this.backendService = backendService;
@@ -40,6 +43,12 @@ public class GameController : MonoBehaviour
         this.gameView = gameView.GetComponent<GameView>();
         this.gameMode = gameMode;
 
+
+        // Inicializamos el notificador del modelo
+        modelNotifier = new GameModelNotifier(gameModel);
+
+        // La GameView se suscribe al notificador para actualizarse automáticamente
+        gameView.Initialize(modelNotifier);
 
         // Supongamos que el GameController es un MonoBehaviour, se puede iniciar el chequeo continuo solo para PvP:
         if (gameConfig.selectedGameMode == GameMode.PvP)
@@ -194,7 +203,7 @@ public class GameController : MonoBehaviour
                 Debug.LogError("El GameModel no tiene un tablero cargado.");
                 return;
             }
-            gameView.InitializeBoard(gameModel.data.gameBoard);
+            
             // Una vez que se ha cargado el tablero, se pasa a la inicialización de la vista de juego.
             ChangeGameState(GameStatus.GameSetup);
         }
@@ -209,14 +218,11 @@ public class GameController : MonoBehaviour
     private void HandleGameSetup()
     {
         Debug.Log("Estado: GameSetup");
-        // Se posiciona al jugador en la celda inicial y se inicializan los elementos de la UI.
-        // Aquí se podrían llamar métodos del UIController y PlayerPlacementManager.
         try
         {
-            // Ejemplo: Posicionar al jugador y configurar la UI.
-            PositionPlayerAtInitialCell();
-            InitializeUIElements();
-            // Una vez terminado, se notifica que el jugador está listo y se pasa al estado GameStart.
+            Debug.Log("Estado: GameSetup");
+            // Llamamos a la GameView para configurar la UI
+            gameView.SetupUI();
             ChangeGameState(GameStatus.GameStart);
         }
         catch (Exception ex)
@@ -244,8 +250,6 @@ public class GameController : MonoBehaviour
     private void HandleGameStart()
     {
         Debug.Log("Estado: GameStart");
-        // Estado intermedio: se puede implementar un "ready check" o cuenta regresiva antes de iniciar el juego.
-        // Por simplicidad, se simula una espera de 3 segundos.
         StartCoroutine(ReadyCountdown(3));
     }
 
@@ -267,13 +271,7 @@ public class GameController : MonoBehaviour
     private void HandlePlaying()
     {
         Debug.Log("Estado: Playing");
-        // Se habilitan los controles del jugador, se suscribe a actualizaciones del juego y se inicia la lógica de partida.
-        gameModel.data.status = GameStatus.Playing;
-        if (gameConfig.selectedGameMode == GameMode.PvP && !isSubscribedToGameUpdates)
-        {
-            SubscribeToGameUpdates();
-        }
-        // Aquí se pueden activar otros componentes, como temporizadores, eventos de power-ups, etc.
+        modelNotifier.UpdateStatus(GameStatus.Playing);
     }
     #endregion
 
