@@ -25,34 +25,6 @@ public class GameController : MonoBehaviour
     // Evento interno para notificaciones de estado (placeholder para futuro EventBus)
     public event Action<GameStatus> OnStateChanged;
 
-    //public void Initialize(IBackendService backendService, IDictionaryService dictionaryService,
-    //    InputManager inputManager, GameConfig gameConfig, BoardConfig boardConfig,
-    //    BoardController boardController, GameObject gameView, IGameMode gameMode)
-    //{
-    //    this.backendService = backendService;
-    //    this.dictionaryService = dictionaryService;
-    //    this.inputManager = inputManager;
-    //    this.gameConfig = gameConfig;
-    //    this.boardConfig = boardConfig;
-    //    this.boardController = boardController;
-    //    this.gameView = gameView.GetComponent<GameView>();
-    //    this.gameMode = gameMode;
-
-    //    // Aquí se puede iniciar el flujo llamando al GameMode para emparejar y cargar el tablero.
-    //    // Por ejemplo, se puede tener un método que invoque el InitializeGame del IGameMode y, en su callback,
-    //    // se llame a ChangeGameState para avanzar el flujo.
-    //    gameMode.InitializeGame(gameConfig, boardConfig, backendService, dictionaryService, /* boardGenerator, si aplica */ null,
-    //        (GameModel gm) => {
-    //            // Callback cuando el tablero se ha generado y sincronizado.
-    //            // Actualizamos el GameModel del GameController y avanzamos al siguiente estado.
-    //            this.gameModel = gm;
-    //            ChangeGameState(GameStatus.BoardLoaded);
-    //        });
-
-    //    // Inicialmente, se parte desde un estado de emparejamiento o espera
-    //    ChangeGameState(GameStatus.WaitingForOpponent);
-    //}
-
 
     public void Initialize(IBackendService backendService, IDictionaryService dictionaryService,
     InputManager inputManager, GameConfig gameConfig, BoardConfig boardConfig, BoardController boardController, 
@@ -64,10 +36,35 @@ public class GameController : MonoBehaviour
         this.inputManager = inputManager;
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
-        this.gameModel = gameModel;
         this.boardController = boardController;
         this.gameView = gameView.GetComponent<GameView>();
         this.gameMode = gameMode;
+
+
+        // Supongamos que el GameController es un MonoBehaviour, se puede iniciar el chequeo continuo solo para PvP:
+        if (gameConfig.selectedGameMode == GameMode.PvP)
+        {
+            gameMode.CheckConnection((connected) =>
+            {
+                if (!connected)
+                {
+                    Debug.LogError("No hay conexión al iniciar el modo PvP.");
+                    // Podrías optar por no continuar o notificar al usuario.
+                }
+                else
+                {
+                    Debug.Log("Conexión estable al iniciar el modo PvP.");
+                }
+            });
+
+            // Inicia la comprobación continua de conexión:
+            ((PvPGameMode)gameMode).StartContinuousConnectionCheck(this, () =>
+            {
+                // Si se pierde la conexión durante el juego, finaliza la partida.
+                EndGameDueToConnectionLoss();
+            });
+        }
+
 
         // Se inicia la cadena de estados:
         // 1. Emparejamiento
@@ -95,6 +92,14 @@ public class GameController : MonoBehaviour
 
         // Se inicia el flujo en estado WaitingForOpponent
         ChangeGameState(GameStatus.WaitingForOpponent);
+    }
+
+
+    private void EndGameDueToConnectionLoss()
+    {
+        Debug.Log("Finalizando partida debido a pérdida de conexión.");
+        // Aquí puedes cambiar el estado, notificar al backend y llevar al usuario a la pantalla de Game Over.
+        EndGame();
     }
 
 

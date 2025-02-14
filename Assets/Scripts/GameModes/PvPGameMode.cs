@@ -4,6 +4,7 @@ using Firebase.Database;
 using Firebase.Extensions;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -16,6 +17,11 @@ public class PvPGameMode : IGameMode
     private DatabaseReference gamesRef;
     private bool isGameAddedSubscribed = false;
 
+    /* Comprobación de conexión */
+    private bool isConnected = true;
+    private float disconnectGraceTime = 30.0f;  // Tiempo de cortesía en segundos
+    private float disconnectTimer = 0f;
+    private Coroutine connectionCheckerCoroutine;
 
 
     public void Initialize(GameConfig gameConfig, BoardConfig boardConfig, IBackendService backendService,
@@ -24,6 +30,107 @@ public class PvPGameMode : IGameMode
         this.boardGenerator = boardGenerator;
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
+    }
+
+
+    
+
+    /// <summary>
+    /// Este método se suscribe a .info/connected y llama al callback con el estado actual.
+    /// </summary>
+    public void CheckConnection(Action<bool> callback)
+    {
+        try
+        {
+            DatabaseReference connectedRef = FirebaseInitializer.dbRef.GetReference(".info/connected");
+            // Suscribirse al evento ValueChanged para monitorizar la conexión.
+            connectedRef.ValueChanged += OnConnectionValueChanged;
+            // Se llama al callback con el estado actual.
+            callback?.Invoke(isConnected);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Excepción en CheckConnection: " + ex.Message);
+            callback?.Invoke(false);
+        }
+    }
+
+    /// <summary>
+    /// Evento que se lanza al cambiar el estado de la conexión.
+    /// </summary>
+    private void OnConnectionValueChanged(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError("Firebase error en CheckConnection: " + args.DatabaseError.Message);
+            return;
+        }
+
+        if (args.Snapshot != null && args.Snapshot.Value != null)
+        {
+            bool currentStatus = Convert.ToBoolean(args.Snapshot.Value);
+            if (currentStatus)
+            {
+                isConnected = true;
+                disconnectTimer = 0f;
+            }
+            else
+            {
+                isConnected = false;
+            }
+            Debug.Log("Estado de conexión (PvP): " + isConnected);
+        }
+    }
+
+    /// <summary>
+    /// Inicia una comprobación continua de la conexión durante la partida.
+    /// Si se pierde la conexión durante el tiempo de cortesía, se invoca el callback onConnectionLost.
+    /// </summary>
+    public void StartContinuousConnectionCheck(MonoBehaviour host, Action onConnectionLost)
+    {
+        if (connectionCheckerCoroutine != null)
+        {
+            host.StopCoroutine(connectionCheckerCoroutine);
+        }
+        connectionCheckerCoroutine = host.StartCoroutine(ConnectionCheckerCoroutine(onConnectionLost));
+    }
+
+
+    
+
+    private IEnumerator ConnectionCheckerCoroutine(Action onConnectionLost)
+    {
+        // Intervalo entre comprobaciones (en segundos)
+        float checkInterval = 6f;
+
+        while (true)
+        {            
+
+            if (!isConnected)
+            {
+                disconnectTimer += Time.deltaTime;
+                if (disconnectTimer >= disconnectGraceTime)
+                {
+                    Debug.LogWarning("Conexión perdida por más de " + disconnectGraceTime + " segundos. Finalizando partida.");
+                    onConnectionLost?.Invoke();
+                    yield break;
+                }
+            }
+            else
+            {
+                disconnectTimer = 0f;
+            }
+
+            // Espera el intervalo definido antes de realizar la comprobación
+            yield return new WaitForSeconds(checkInterval);
+        }
+    }
+
+    // Recuerda desuscribirte del evento OnConnectionValueChanged cuando finalice la partida.
+    public void StopContinuousConnectionCheck()
+    {
+        DatabaseReference connectedRef = FirebaseInitializer.dbRef.GetReference(".info/connected");
+        connectedRef.ValueChanged -= OnConnectionValueChanged;
     }
 
 

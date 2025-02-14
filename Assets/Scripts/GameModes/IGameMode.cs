@@ -22,6 +22,12 @@ public interface IGameMode
         IDictionaryService dictionaryService, BoardGenerator boardGenerator);
 
     /// <summary>
+    /// Comprueba la conexión a Internet.
+    /// </summary>
+    /// <param name="onConnectionChecked"></param>
+    void CheckConnection(Action<bool> onConnectionChecked);
+
+    /// <summary>
     /// Inicia el proceso de emparejamiento y espera a que se encuentre un oponente.
     /// El callback se invoca cuando se detecta que se ha emparejado (por ejemplo, tras registrar al jugador en Firebase y detectar la entrada de un segundo jugador).
     /// </summary>

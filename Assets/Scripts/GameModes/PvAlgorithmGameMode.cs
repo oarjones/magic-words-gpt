@@ -2,6 +2,7 @@ using Assets.Scripts.Enums;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Models;
 using Firebase.Auth;
+using Firebase.Database;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -22,6 +23,24 @@ public class PvAlgorithmGameMode : IGameMode
         this.gameConfig = gameConfig;
         this.boardConfig = boardConfig;
     }
+
+    /// <summary>
+    /// En el modo PvA no hay necesidad de comprobar la conexión a Internet.
+    /// </summary>
+    /// <param name="onConnectionChecked">Callback con el resultado de la comprobación.</param>
+    public void CheckConnection(Action<bool> onConnectionChecked)
+    {
+        try
+        {
+            onConnectionChecked?.Invoke(true);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Excepción en CheckConnection: " + ex.Message);
+            onConnectionChecked?.Invoke(false);
+        }
+    }
+
 
     public void GenerateBoard(Action<GameModel> onBoardGenerated)
     {
